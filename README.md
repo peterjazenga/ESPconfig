@@ -24,9 +24,10 @@ Some amateur code is very good unfortunately I would not class the available web
 <li>Help/About page supported and loaded from SPIFFS</li>
 </ol>
 <p>Arduino provides an easy path to OTA but its on constantly making it a security risk and it does not offer and easy to use file uploader</p>
-<p>Some of the existing config systems use EEPROM emulation on ESP devices which does not incorporate wear leveling leading to relatively low write count and reliability</p>
+<p>Some of the existing config systems use EEPROM emulation on ESP devices which does not incorporate wear leveling leading to relatively low write count and reliability issues</p>
 <p>None of the config systems I have found offer an easy to use time setting function with NTP support</p>
 <p>None seem to offer even the most basic login security</p>
 <p>I am currently developing this as FOSS under the Mozilla license.</p>
 <p><a href="https://github.com/peterjazenga/ESPconfig" target="_blank" rel="noopener">https://github.com/peterjazenga/ESPconfig</a></p>
 <p>&nbsp;</p>
+<p>I have found one config system which has a wide range of features but due to GPL licence it is unsuitable for commercial use</P>
