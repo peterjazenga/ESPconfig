@@ -3,7 +3,7 @@ A configuration tool for ESP32 &amp; ESP8266 devices
 
 <p>I work with ESP32 &amp; ESP8266 for various embedded projects and I have found the Arduino IDE to be rather primitive compared to almost every other IDE I have used however it has one huge advantage, it gives me an easy to use tool and common core for a wide range of SOC based boards with Atmel, ARM, ESP and several other processors along with very easy uploading to the target</p>
 <p>The IDE is of course targeted at hobbyists so many of the libraries are written by non-professional coders leading to code quality and license issues for commercial developers<br />
-Some amateur code is very good unfortunately I would not class the available web based ESP configuration tools among them</p>
+Some amateur code is very good, unfortunately I would not class the available web based ESP configuration tools among them</p>
 <p>As ESP devices are very low cost and include WiFi, they are strong candidates for low cost WiFi enabled IOT devices</p>
 <p>It is because of this that I have decided to integrate various code chunks from a few different projects into a library that will address the config problem</p>
 <p>I have the following goals</p>
@@ -16,7 +16,7 @@ Some amateur code is very good unfortunately I would not class the available web
 <li>Online registration of the user &amp; device</li>
 <li>Shared login update across multiple devices on the same subnet</li>
 <li>Ability to login to multiple WiFi access points</li>
-<li>Hotspot, WiFi extender &amp; Mesh modes</li>
+<li>Hotspot, WiFi NAT extender</li>
 <li>For ESP32, Bluetooth configuration</li>
 <li>Extendable config pages with easy to use form building objects</li>
 <li>Class based for ease of integration and use</li>
