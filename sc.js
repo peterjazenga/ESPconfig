@@ -24,9 +24,10 @@ function inputrewrite(tag)
 			var newItem = document.createElement("label");
 			newItem.innerHTML = label;
 			list[i].parentNode.insertBefore(newItem, list[i]);
+			var name=list[i].getAttribute("name");
+			if (!name){ list[i].name=label;}
 		}
 
-		list[i].name = list[i].id;
 		if (list[i].className.indexOf("w3-input") == -1)
 		{
 			list[i].className += "w3-input w3-border";
