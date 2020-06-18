@@ -197,7 +197,6 @@ class tSysConfig : ESP8266WebServer {
  ESP8266WebServer server;
  ESP8266WiFiMulti WiFiMulti;
  WiFiUDP udp; 
- void firstrun(); 
  /* this is meant to engage an automated Configuration mode that connects to a predefined WiFi and then calls some functions to get the logo, CSS, about, help and initConfig files 
  * firstrun passes the device Mac number to the called program, this then sets a unique login ID for the device Configuration file 
  * firstrun also exposes the AP with the default device name in the format of TRL-xxxxxx with the password of TRLinitialize
@@ -211,7 +210,6 @@ class tSysConfig : ESP8266WebServer {
  bool writeConfig();// writes to the Configuration file
  void updateConfig();// reinitialize the unit
  void OTAinit(); // Over the air update system management
- void OTArun();
  void blink(); 
  void init(); // startup code
  void run(); // called from the loop code to maintain periodic functions
@@ -341,6 +339,7 @@ void tSysConfig::run() {
  // there is no provision for on demand update in the code yet
  // noob value is to activate OTA
  switch (_data.OTA){
+ case 0: ArduinoOTA.handle(); break;
  case 2:if (millis()<300000){ ArduinoOTA.handle();} break; // active on boot for 5 minutes
  case 4:break; // totally stopped
  default: ArduinoOTA.handle();
@@ -446,7 +445,6 @@ void tSysConfig::initConfig() {
  _data.PIDcontrolled=true; // if running on a PID, the value used for setPoint is setPoint*/
  // initialize the timers to zero hours on zero days
  Serial.println("Default parameters loaded");
- // firstrun();
 } 
 }
 void tSysConfig::initWiFi(){
@@ -577,21 +575,11 @@ void tSysConfig::OTAinit(){
  else if (error == OTA_END_ERROR) Serial.println("End Failed");
  });
  ArduinoOTA.setHostname(_data.APname);
- ArduinoOTA.begin(); 
+ ArduinoOTA.begin(true); 
  }
-void tSysConfig::OTArun(){
- switch (_data.OTA){
- case 2:if (millis()<300000){ ArduinoOTA.handle();} break; // active on boot for 5 minutes
- case 4:break; // totally stopped
- default: ArduinoOTA.handle();
- }
- server.handleClient();
- MDNS.update();
-}
-
+ 
 void tSysConfig::indexPage(void) {
- Serial.println("doing index");
- File dataFile = SPIFFS.open("/index.html", "r"); 
+  File dataFile = SPIFFS.open("/index.html", "r"); 
  if (dataFile.size()<=0) {Serial.println("bad file size");
  }
  if (server.streamFile(dataFile, "text/html") != dataFile.size()) {Serial.println(F("index.html streaming error"));
@@ -601,8 +589,8 @@ void tSysConfig::indexPage(void) {
 void tSysConfig::Config(){ 
  HTML=F("<!DOCTYPE html><html><head><meta charset=\"UTF-8\"><title>ESP Config Page</title><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">");
  HTML+=F("<link rel=\"stylesheet\" type=\"text/css\" href=\"w3.css\">");
- HTML+=F("<script type=\"text/javascript\" src=\"/sc.js\"></script>");
- HTML+=F("</head><body onload=\"remap()\"><div class=\"w3-container w3-blue\">");
+ HTML+=F("<script type=\"text/javascript\" src=\"sc.js\"></script>");
+ HTML+=F("</head><body onload=\"rewrite()\"><div class=\"w3-container w3-blue\">");
  HTML+=F("System configuration <button onclick=\"openTab('A')\">WiFi connection</button>");
  HTML+=F("<button onclick=\"openTab('B')\">AP</button><button onclick=\"openTab('C')\">Bluetooth</button>");
  HTML+=F("<button onclick=\"openTab('D')\">Time</button><button onclick=\"openTab('E')\">Updates</button></div>");
@@ -704,60 +692,82 @@ void tSysConfig::Config(){
  fieldset("E"); 
  webobj.name="OTA";
  webobj.label="OTA configuration:";
- edit(webobj,_data.OTA);
- webobj.name="OTApass";
+ selectByte(webobj,_data.OTA);
+ option(0,"Disabled");
+ option(1, "5 minutes");
+ option(2, "Always on");
+ selectList(); webobj.name="OTApass";
  webobj.label="OTA Password:";
  password(webobj,_data.OTApass,32);
- webobj.name="configPage";
- webobj.label="WiFi 3:";
- //edit(webobj,_data.AccessPoints[2].WiFiname,32);
+
  fieldset();
  form();
  HTML+=F("</body></html>");
- Serial.println("ready to send");
+
  server.send(200, "text/html", HTML);
  HTML=""; webobj.name="", webobj.css="";webobj.label=""; webobj.placeholder="";
 }
 void tSysConfig::Sensors(){
  HTML=F("<!DOCTYPE html><html><head><meta charset=\"UTF-8\"><title>ESP Sensor Page</title><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">");
- HTML+=F("<link rel=\"stylesheet\" type=\"text/css\" href=\"w3.css\"><script src=\"sc.js\"></script></head><body onload=\"remap()\"><div class=\"w3-container w3-blue\">");
+ HTML+=F("<link rel=\"stylesheet\" type=\"text/css\" href=\"w3.css\"><script src=\"sc.js\"></script></head><body onload=\"rewrite()\"><div class=\"w3-container w3-blue\">");
  HTML+=F("Sensor configuration</div>");
+ webobj.name="sensors";
+ form(webobj);
+ 
+ form();
  HTML+=F("</body></html>");
  server.send(200, "text/html", HTML);
  HTML=""; webobj.name="", webobj.css="";webobj.label=""; webobj.placeholder="";
 }
 void tSysConfig::Timers(){ 
  HTML=F("<!DOCTYPE html><html><head><meta charset=\"UTF-8\"><title>ESP Timers Page</title><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">");
- HTML+=F("<link rel=\"stylesheet\" type=\"text/css\" href=\"w3.css\"><script src=\"sc.js\"></script></head><body onload=\"remap()\"><div class=\"w3-container w3-blue\">");
- HTML+=F("Timers</div><table>");
- for (int i = 0; i < 8; i++){
-  sprintf(buffer,"<tr><td>%d</td><td>",i+1);
-  HTML+=buffer;
-  sprintf(buffer,"st_%i",i);
-  webobj.name=buffer;
-  webobj.label="Start time";
-   editTime(webobj,_data.timers[1].startTime);
-  HTML+="</td><td>";
-  sprintf(buffer,"et_%i",i);
-  webobj.name=buffer;
-  webobj.label="End time";
-   editTime(webobj,_data.timers[1].endTime);
-  HTML+="</td><td>";
-  sprintf(buffer,"dow_%i",i);
-  webobj.name=buffer;
-  webobj.label="DOW";
-  edit(webobj,_data.timers[i].dow);
-  HTML+="</td></tr>";
+ HTML+=F("<link rel=\"stylesheet\" type=\"text/css\" href=\"w3.css\"><script src=\"sc.js\"></script></head><body onload=\"rewrite()\"><div class=\"w3-container w3-blue\">Timers</div>");
+ webobj.name="timers";
+ form(webobj); 
+ HTML+=F("<table id = \"tt\"></table><script>var time, i, id, x = \"\";\r\n var time ='{\"alarms\":[");
+ 
+/* add the variables here for the form, deliberately ignore blank entries on the first pass and include them as an addendum so that 
+ *  all active timers go to the top of the page
+ *  use a variable to tell the script how many placeholders to enter for the disabled/blank alarms
+*/
+ tmElements_t stime,etime; 
+  int dis=0;
+ for(int i = 0; i<16 ;i++) 
+ { 
+ // if (_data.timers[i].startTime!=_data.timers[i].endTime) 
+  {
+   // split the time variable
+  breakTime(_data.timers[i].startTime, stime); 
+  breakTime(_data.timers[i].endTime, etime); 
+  if (i) {
+   sprintf(buffer,",[\"%02d:%02d\",\"%02d:%02d\",%d]",stime.Hour, stime.Minute, etime.Hour, etime.Minute, _data.timers[i].dow); } else {
+   sprintf(buffer,"[\"%02d:%02d\",\"%02d:%02d\",%d]",stime.Hour, stime.Minute, etime.Hour, etime.Minute, _data.timers[i].dow);         
+   }
+   HTML+=buffer;
+  }// else {++dis;}// dont add a variable, instead we give a count in the json object to let the script know how many blank fields to add
+  
  }
- HTML+=F("</table></body></html>"); 
+  sprintf(buffer,"],\"dis\":%2d}';\r\n",dis);
+// dynamically create the form 
+ HTML+=buffer;
+ HTML+=F("var times = JSON.parse(time);\r\n  id=0;\r\n  for (i in times.alarms) {\r\n ++id; x+=\"<tr><td>\"+ id +\"</td><td><input type=\\\"time\\\" name=\\\"st_\"+i+");
+ HTML+=F("\"\\\" value=\\\"\" + times.alarms[i][0] + \"\\\"></td><td><input type=\\\"time\\\" name=\\\"et_\"+i+\"\\\" value=\\\"\" + times.alarms[i][1] +");  
+ HTML+=F("\"\\\"></td><td><select name=\\\"d_\"+i+\"\\\" value=\\\"\" + times.alarms[i][2]+");
+ HTML+=F("\"\\\"><option value=-1>Disabled</option><option value=0>Mon</option><option value=1>Tue</option><option value=2>Wed</option><option value=3>Thu</option><option value=4>Fri</option><option value=5>Sat</option><option value=6>Sun</option><option value=7>Daily</option><option value=8>Once</option></select></td></tr>\";");
+ HTML+=F("}\r\n  document.getElementById(\"tt\").innerHTML = \"<TR><TD>ID</td><td>Start</td><td>Stop</td><td><abbr title=\\\"Day of week\\\">DOW<abbr></TD></tr>\"+x; </script>");
+
+ form();
+ HTML+=F("</body></html>"); 
  server.send(200, "text/html", HTML);
  HTML=""; webobj.name="", webobj.css="";webobj.label=""; webobj.placeholder="";
 }
 
 void tSysConfig::ACL(){ 
  HTML=F("<!DOCTYPE html><html><head><meta charset=\"UTF-8\"><title>ESP Timers Page</title><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">");
- HTML+=F("<link rel=\"stylesheet\" type=\"text/css\" href=\"w3.css\"><script src=\"sc.js\"></script></head><body onload=\"remap()\"><div class=\"w3-container w3-blue\">");
+ HTML+=F("<link rel=\"stylesheet\" type=\"text/css\" href=\"w3.css\"><script src=\"sc.js\"></script></head><body onload=\"rewrite()\"><div class=\"w3-container w3-blue\">");
  HTML+=F("Access control</div>");
+ webobj.name="ACL";
+ form(webobj);
  webobj.name="fname";
  webobj.label="&#128100";
  webobj.placeholder="Username Name";
@@ -778,14 +788,18 @@ void tSysConfig::ACL(){
  webobj.label="&#128397";
  webobj.placeholder="Device Name";
  edit(webobj,_data.NodeName,32);*/
+ 
+ form();
 
  HTML+=F("</body></html>"); 
  server.send(200, "text/html", HTML);HTML=""; webobj.name="", webobj.css="";webobj.label=""; webobj.placeholder="";
 }
 void tSysConfig::Register(){ 
  HTML=F("<!DOCTYPE html><html><head><meta charset=\"UTF-8\"><title>ESP Timers Page</title><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">");
- HTML+=F("<link rel=\"stylesheet\" type=\"text/css\" href=\"w3.css\"><script src=\"sc.js\"></script></head><body onload=\"remap()\"><div class=\"w3-container w3-blue\">");
+ HTML+=F("<link rel=\"stylesheet\" type=\"text/css\" href=\"w3.css\"><script src=\"sc.js\"></script></head><body onload=\"rewrite()\"><div class=\"w3-container w3-blue\">");
  HTML+=F("Device registration</div>");
+ webobj.name="register";
+ form(webobj);
  webobj.name="fname";
  webobj.label="&#128100";
  webobj.placeholder="First Name";
@@ -806,22 +820,25 @@ void tSysConfig::Register(){
  webobj.label="&#128397";
  webobj.placeholder="Device Name";
  edit(webobj,_data.NodeName,32);
-
+ form();
  HTML+=F("</body></html>"); 
  server.send(200, "text/html", HTML);HTML=""; webobj.name="", webobj.css="";webobj.label=""; webobj.placeholder="";
 }
 void tSysConfig::MQTT(){ 
  HTML=F("<!DOCTYPE html><html><head><meta charset=\"UTF-8\"><title>ESP Timers Page</title><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">");
- HTML+=F("<link rel=\"stylesheet\" type=\"text/css\" href=\"w3.css\"><script src=\"sc.js\"></script></head><body onload=\"remap()\"><div class=\"w3-container w3-blue\">");
+ HTML+=F("<link rel=\"stylesheet\" type=\"text/css\" href=\"w3.css\"><script src=\"sc.js\"></script></head><body onload=\"rewrite()\"><div class=\"w3-container w3-blue\">");
  HTML+=F("MQTT configuration</div>");
-
+ webobj.name="MQTT";
+ form(webobj);
+ 
+ form();
  HTML+=F("</body></html>"); 
  server.send(200, "text/html", HTML);HTML=""; webobj.name="", webobj.css="";webobj.label=""; webobj.placeholder="";
 }
 
 void tSysConfig::Sysinfo(){ 
  HTML=F("<!DOCTYPE html><html><head><meta charset=\"UTF-8\"><title>ESP Timers Page</title><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">");
- HTML+=F("<link rel=\"stylesheet\" type=\"text/css\" href=\"w3.css\"><script src=\"sc.js\"></script></head><body onload=\"remap()\"><div class=\"w3-container w3-blue\">");
+ HTML+=F("<link rel=\"stylesheet\" type=\"text/css\" href=\"w3.css\"><script src=\"sc.js\"></script></head><body onload=\"rewrite()\"><div class=\"w3-container w3-blue\">");
  HTML+=F("Sysinfo</div><table class=\"w3-table w3-striped w3-border\"><tr><th>Parameter</th><th>Value</th></tr>");
  sprintf(buffer," <tr><td>ESP 8266 Chip id</td><td>%08X</td></tr>",ESP.getChipId());
  HTML+=buffer;
@@ -868,7 +885,6 @@ void tSysConfig::Sysinfo(){
 }
 
 void tSysConfig::getIcon(){
- Serial.println("doing Favicon.ico");
  File dataFile = SPIFFS.open("/favicon.ico", "r"); 
  if (dataFile.size()<=0) {Serial.println("icon bad file size");
  }
@@ -910,7 +926,7 @@ void tSysConfig::getSCjs(){
 }
 void tSysConfig::getCharts(){
  HTML=F("<!DOCTYPE html><html><head><meta charset=\"UTF-8\"><title>ESP Timers Page</title><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">");
- HTML+=F("<link rel=\"stylesheet\" type=\"text/css\" href=\"w3.css\"><script src=\"sc.js\"></script></head><body onload=\"remap()\"><div class=\"w3-container w3-blue\">");
+ HTML+=F("<link rel=\"stylesheet\" type=\"text/css\" href=\"w3.css\"><script src=\"sc.js\"></script></head><body onload=\"rewrite()\"><div class=\"w3-container w3-blue\">");
  HTML+=F("Charts</div>");
 
  HTML+=F("</body></html>"); 
@@ -1060,9 +1076,9 @@ bool tSysConfig::editTime(htmlproperties obj, time_t &data){
  }
  tmElements_t atime; 
  breakTime(data, atime); 
- atime.Hour=13;
- atime.Minute=14;
- sprintf(buffer,"<input type=\"time\" name=\"%s\" label=\"%s\" Value=\"%02d:%02d\" placeholder=\"%s\"  %s>",obj.name.c_str(),obj.label.c_str(),atime.Hour,atime.Minute,obj.placeholder.c_str(),(obj.required)?" REQUIRED ":"");
+ //atime.Hour=13;
+ //atime.Minute=14;
+ sprintf(buffer,"<input type=\"time\" name=\"%s\" label=\"%s\" Value=\"%02d:%02d\" %s>",obj.name.c_str(),obj.label.c_str(),atime.Hour,atime.Minute,(obj.required)?" REQUIRED ":"");
  HTML+=buffer;
 }
 /*  our select methods require some Javascript magic, the <select> element does not normally carry the value but this is carried here to 
@@ -1465,3 +1481,4 @@ void tSysConfig::scanWiFi(){
 }
 
 tSysConfig sysConfig;
+
