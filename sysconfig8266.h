@@ -32,7 +32,6 @@
 #include <TZ.h>
 #include <Schedule.h>
 #include <PolledTimeout.h>
-
 */////////////////////////////////////
 #define NAPT 1000
 #define NAPT_PORT 10
@@ -45,12 +44,6 @@ typedef struct {
  uint8_t dow;// used as a set of flags to define what day of the week its active
  // the msb is the enable bit for the timer
 } ttimer;
-typedef struct {
- byte startTime;
- byte endTime;
- byte dow;// used as a set of flags to define what day of the week its active
- // the msb is the enable bit for the timer
-} tverifytimer;
 
 typedef struct {
 char WiFiname[32];
@@ -64,23 +57,23 @@ char APpassword[32];
 IPAddress ip;
 IPAddress gateway;
 IPAddress subnet;
-byte APchannel;
+int8_t APchannel;
 char NTPserverValue[128];
 char BLEname[32];
 char BLEpassword[32];
-byte ConfigPage;
-byte BLEConfig; 
-byte APconfig; 
-byte sensorConfig;
-byte timerConfig;
-byte TZ; // defaults to GMT, handles time zone
+int8_t ConfigPage;
+int8_t BLEConfig; 
+int8_t APconfig; 
+int8_t sensorConfig;
+int8_t timerConfig;
+int8_t TZ; // defaults to GMT, handles time zone
 char NTPserver[128];
 float setPoint; // also used as setPoint for PID loops
 float rangeValue;
 time_t min_on;
 time_t max_on;
 time_t min_off;
-byte OTA;
+int8_t OTA;
 char OTApass[32];
 float iceGuard; //used by heating and cooling to prevent icing, must be >0 to be active
 bool activeHigh; // heating activates when temperature drops below the lower trigger value
@@ -116,9 +109,13 @@ typedef struct {
 
 // defines
 #define NaN -1
-#define NoString -2
-#define Range -3
-#define NotFound -4
+#define NoString NaN-1
+#define Range NoString-1
+#define RangeLow Range-1
+#define RangeHigh RangeLow-1
+#define NotFound RangeHigh-1
+#define InvalidTime NotFound-1
+#define BadAddress InvalidTime-1
 #define OK 0
 
 #define FAST_BLINK 50 // use for errors
@@ -134,12 +131,12 @@ typedef struct {
 IPAddress ip(192,168,4,1);
 IPAddress gateway(192,168,4,1);
 IPAddress subnet(255,255,255,0);
-int APchannel = 11;
+int8_t APchannel = 11;
 unsigned int localPort = 2390;  // local port to listen for UDP packets
 
 // main classes for Configuration management, time management and NAT
-enum errorclass {ecRange,ecRequired,ecNaN,ecPassword};
-enum s_class {s_none, s_byte, s_int, s_float, s_text};// used by the select functions
+enum error {ecRange,ecRequired,ecNaN,ecPassword};
+enum s_class {s_none, s_int8_t, s_int32_t, s_float, s_text};// used by the select functions
 
 typedef std::function<void(time_t trigger)> TTimerFunction;
  
@@ -149,47 +146,47 @@ class tSysConfig : ESP8266WebServer {
  dataframe _formdata; // the data contained herein is used to process the form data
  // LED information for heartbeat LED
  long lastBlinkMillis;
- int blinkstate=0;// defines which blink is used, 0-3 are slow 4-7 are fast blink
- int LEDstate=0;//inidicates which bit of the pattern is in use
+ int32_t blinkstate=0;// defines which blink is used, 0-3 are slow 4-7 are fast blink
+ int32_t LEDstate=0;//inidicates which bit of the pattern is in use
  // WiFi connection information
  long currentMillis = 0;
  long lastScanMillis;
  long lastConnectMillis;
  // network scanning info
  bool STAconnected=false;
- int n=-2;
+ int32_t n=-2;
  String ssid;
  uint8_t encryptionType;
  int32_t RSSI;
  uint8_t* BSSID;
  int32_t channel;
  bool isHidden;
- protected: 
+protected: 
  uint32_t realSize;
  uint32_t ideSize;
  FlashMode_t ideMode;
- String error; // used singularly during form processing, each new element resets this
- int errorclass; // used singularly during form processing, each new element resets this
- int errorcount;
+ int32_t error; // used singularly during form processing, each new element resets this
+ int32_t errorcount;
  String HTML; // used to build the web page
  char buffer[256];
  bool inForm;
  bool inFieldset;
  s_class inSelect; // if we are in a select group we need to know the class so it processes the correct information
  bool inOptgroup;
-/* int inDiv; // divisions can be nested
- bool inTable[4];// there are 5 flags corresponding to Table, THead, TR, TD & TFoot
+/* int32_t inDiv; // divisions can be nested
+ bool int32_table[4];// there are 5 flags corresponding to Table, THead, TR, TD & TFoot
  bool inUL;
  bool inOL;*/
  bool lightHTML;
  public:
- int configPin = D2;
+ int32_t configPin = D2;
  char *author;
  char *copyright;
  char *version;
- int charsize;
- int major;
- int minor;
+ int32_t charsize;
+ int32_t major;
+ int32_t minor;
+ bool hasBluetooth=false;
  public:
 // this is API to the Config system but the only routines that the user is required to utilize are tSysConfig(); & run();
 // if desired, the device name can be changed prior to calling init
@@ -216,19 +213,19 @@ class tSysConfig : ESP8266WebServer {
  // there are lots of web functions as this is a web based Configuration program
  void indexPage(void);
  // procedures to handle forms
- boolean isInteger(String str); 
+ boolean isinteger(String str); 
  boolean isFloat(String str);
  boolean isTime(String str);
  boolean isIP(String str);
 
  // copy values from post function is overloaded and has default parameters, if min-max are equal, range is ignored otherwise range checking is used
- int copyval(byte &var, char* name, byte min=0, byte max=0);
- int copyval(int &var, char* name, int min=0, int max=0);
- int copyval(float &var, char* name, float min=0, float max=0);
- int copyval(char* var, char* name, int size, int min=0);
- int copyval(time_t &var, char* name);
- int copyval(bool &var, char* name); // checkbox is unlike other fields, if its checked, it is included otherwise the field is not returned at all by the form post
- int copyIP(IPAddress &var, char* name);
+ int32_t copyval(int8_t &var, char const *name, int8_t min=0, int8_t max=0);
+ int32_t copyval(int32_t &var, char const *name, int32_t min=0, int32_t max=0);
+ int32_t copyval(float &var, char const *name, float min=0, float max=0);
+ int32_t copyval(char* var, char const *name, int32_t size, int32_t min=0);
+ int32_t copyval(time_t &var, char const *name);
+ int32_t copyval(bool &var, char const *name); // checkbox is unlike other fields, if its checked, it is included otherwise the field is not returned at all by the form post
+ int32_t copyIP(IPAddress &var, char const *name);
 
  // form creation support
  bool form(htmlproperties obj);// all forms are post request only
@@ -237,44 +234,44 @@ class tSysConfig : ESP8266WebServer {
  void fieldset(char* tag); // use to create groupboxes on the form
  void fieldset();
  void label(htmlproperties obj);
- bool edit(htmlproperties obj, char* data, int size);
- bool editurl(htmlproperties obj, char* data, int size);
- bool editemail(htmlproperties obj, char* data, int size);
- bool edittel(htmlproperties obj, char* data, int size);
+ bool edit(htmlproperties obj, char* data, int32_t size);
+ bool editurl(htmlproperties obj, char* data, int32_t size);
+ bool editemail(htmlproperties obj, char* data, int32_t size);
+ bool edittel(htmlproperties obj, char* data, int32_t size);
  bool editTime(htmlproperties obj, time_t &data);
- bool edit(htmlproperties obj, byte &data, byte min=0, byte max=0);
- bool edit(htmlproperties obj, int &data, int min=0, int max=0);
+ bool edit(htmlproperties obj, int8_t &data, int8_t min=0, int8_t max=0);
+ bool edit(htmlproperties obj, int32_t &data, int32_t min=0, int32_t max=0);
  bool edit(htmlproperties obj, float &data, float min=0.0, float max=0.0);
  bool edit(htmlproperties obj, time_t &data, time_t min=0, time_t max=0);
  // unlike other fields, password auto includes Label & verify dialog
- bool password(htmlproperties obj, char* data, int size, int min=0, int max=0);
- bool text(htmlproperties obj, char* data, int size, int min=0, int max=0);
+ bool password(htmlproperties obj, char* data, int32_t size, int32_t min=0, int32_t max=0);
+ bool text(htmlproperties obj, char* data, int32_t size, int32_t min=0, int32_t max=0);
 
- bool selectList(htmlproperties obj,int &data);
- bool selectByte(htmlproperties obj,byte &data);
+ bool selectList(htmlproperties obj,int32_t &data);
+ bool selectint8_t(htmlproperties obj,int8_t &data);
  bool selectList(htmlproperties obj,float &data); 
- bool selectList(htmlproperties obj,char* data, int size);// using this forces options to use the name field as value
+ bool selectList(htmlproperties obj,char* data, int32_t size);// using this forces options to use the name field as value
  bool selectList();// terminates the list
- bool optiongroup(char* name); //groups a value list
+ bool optiongroup(char const *name); //groups a value list
  bool optiongroup(); //terminates the group
 
  bool option(bool data, char *name);
- bool option(byte data, char *name);
- bool option(int data, char *name);
+ bool option(int8_t data, char *name);
+ bool option(int32_t data, char *name);
  bool option(float data, char *name);
  bool option(char* data, char *name);
  bool checkbox(htmlproperties obj, bool &data);
- bool checkbox(htmlproperties obj, int &data);
- bool checkbox(htmlproperties obj, char* data, int size);
- bool radio(htmlproperties obj, int &data);
- bool radio(htmlproperties obj, char* data, int size);
- bool range(char* name, int &data);
+ bool checkbox(htmlproperties obj, int32_t &data);
+ bool checkbox(htmlproperties obj, char* data, int32_t size);
+ bool radio(htmlproperties obj, int32_t &data);
+ bool radio(htmlproperties obj, char* data, int32_t size);
+ bool editrange(htmlproperties obj, int32_t &data, int32_t min=0, int32_t max=0);
  // additional html elements of significant use to us
  // https://www.w3schools.com/tags/tag_meter.asp
- void meter(htmlproperties obj, int value, int min=0, int max=0);
+ void meter(htmlproperties obj, int32_t value, int32_t min=0, int32_t max=0);
  void meter(htmlproperties obj, float value, float min =0, float max =0);
  // https://www.w3schools.com/tags/tag_progress.asp
- void progress(htmlproperties obj, int value, int min=0, int max=0);
+ void progress(htmlproperties obj, int32_t value, int32_t min=0, int32_t max=0);
  void progress(htmlproperties obj, float value, float min =0, float max =0);
  // https://www.w3schools.com/tags/tag_details.asp
  void details(htmlproperties obj);
@@ -302,7 +299,7 @@ class tSysConfig : ESP8266WebServer {
  // to support a Configuration application, we have the JSON data exchanges, there are no individual pages in the JSON processing
  void JSON();// format bytes
  // additional utility routines
- String formatBytes(size_t bytes);
+ String formatbytes(size_t bytes);
 };
 
 void tSysConfig::init() {
@@ -406,7 +403,7 @@ void tSysConfig::initConfig() {
  while (dir.next()) {
   String fileName = dir.fileName();
   size_t fileSize = dir.fileSize();
-  Serial.printf("FS File: %s, size: %s\r\n", fileName.c_str(), formatBytes(fileSize).c_str());
+  Serial.printf("FS File: %s, size: %s\r\n", fileName.c_str(), formatbytes(fileSize).c_str());
  }
  Serial.println();
  readConfig();
@@ -448,7 +445,7 @@ void tSysConfig::initConfig() {
 } 
 }
 void tSysConfig::initWiFi(){
- int retries = 0;
+ int8_t retries = 0;
  WiFi.mode(WIFI_AP_STA);
  WiFi.disconnect();
  // scan for available networks
@@ -481,7 +478,7 @@ void tSysConfig::initWiFi(){
  }
  WiFi.softAPConfig(_data.ip,_data.gateway,_data.subnet);
  // check if wifi is connected and what the AP rules are
- // Turn on local Access Point
+ // Turn on local Access point
  switch (_data.APconfig){
  case 0: break;
  case 1:{}
@@ -531,7 +528,7 @@ void tSysConfig::updateConfig() {
 }
 
 void tSysConfig::blink() {
- int t=SLOW_BLINK;
+ int32_t t=SLOW_BLINK;
 if (blinkstate>3) {t=FAST_BLINK;}
  if (currentMillis - lastBlinkMillis > t)
  {
@@ -592,7 +589,8 @@ void tSysConfig::Config(){
  HTML+=F("<script type=\"text/javascript\" src=\"sc.js\"></script>");
  HTML+=F("</head><body onload=\"rewrite()\"><div class=\"w3-container w3-blue\">");
  HTML+=F("System configuration <button onclick=\"openTab('A')\">WiFi connection</button>");
- HTML+=F("<button onclick=\"openTab('B')\">AP</button><button onclick=\"openTab('C')\">Bluetooth</button>");
+ HTML+=F("<button onclick=\"openTab('B')\">AP</button>");
+ if (hasBluetooth){ HTML+=F("<button onclick=\"openTab('C')\">Bluetooth</button>");}
  HTML+=F("<button onclick=\"openTab('D')\">Time</button><button onclick=\"openTab('E')\">Updates</button></div>");
  
  webobj.css=F("w3-container w3-card-4 w3-light-grey w3-text-blue w3-margin");
@@ -655,14 +653,14 @@ void tSysConfig::Config(){
  webobj.label=F("Ap Configuration");
  webobj.placeholder="";
  // the fun part is to put known networks at the top of the list, that means searching through and comparing to those stored in memory
- selectByte(webobj,_data.APconfig);
+ selectint8_t(webobj,_data.APconfig);
  option(0,"Disabled");
  option(1, "Active on boot");
  option(2, "Always active");
  option(3, "Active Android compatible");
  selectList();
 
- 
+ if (hasBluetooth){
  fieldset("C");
  webobj.name=F("BLEname");
  webobj.label=F("BLE name:");
@@ -673,11 +671,12 @@ void tSysConfig::Config(){
  password(webobj,_data.BLEpassword,32);
  webobj.name=F("BLEconfig");
  webobj.label=F("BLE configration:");
- selectByte(webobj,_data.BLEConfig);
+ selectint8_t(webobj,_data.BLEConfig);
  option(-1,"Disabled");
  option(0, "Sensors only");
  option(1, "All");
  selectList();
+ }
  
  fieldset("D");
  webobj.name=F("NTPserverValue");
@@ -692,7 +691,7 @@ void tSysConfig::Config(){
  fieldset("E"); 
  webobj.name="OTA";
  webobj.label="OTA configuration:";
- selectByte(webobj,_data.OTA);
+ selectint8_t(webobj,_data.OTA);
  option(0,"Disabled");
  option(1, "5 minutes");
  option(2, "Always on");
@@ -990,16 +989,18 @@ void tSysConfig::tab(char* tag){
  sprintf(buffer, "<button onclick=\"openTab('%s')\">Updates</button>",tag);
  HTML+=buffer;
 }
-bool tSysConfig::edit(htmlproperties obj, char* data, int size){
+bool tSysConfig::edit(htmlproperties obj, char* data, int32_t size){
  if ( server.method() == HTTP_POST ){
   // POST functionality here, includes error handling
+  error=copyval(data,obj.name.c_str(),size);
  }
  sprintf(buffer,"<input type=\"text\" name=\"%s\" label=\"%s\" value=\"%s\" placeholder=\"%s\" size=\"%d\" %s>",obj.name.c_str(),obj.label.c_str(),data,obj.placeholder.c_str(),size, (obj.required)?" REQUIRED ":"");
  HTML+=buffer;
 }
-bool tSysConfig::edit(htmlproperties obj, byte &data, byte min, byte max){
+bool tSysConfig::edit(htmlproperties obj, int8_t &data, int8_t min, int8_t max){
  if ( server.method() == HTTP_POST ){
   // POST functionality here, includes error handling
+  error=copyval(data,obj.name.c_str(),min,max);
  }
  if (min!=max){
  sprintf(buffer,"<input type=\"number\" name=\"%s\" label=\"%s\" value=\"%d\" placeholder=\"%s\" min=\"%d\" max=\"%d\" %s>",obj.name.c_str(),obj.label.c_str(),data,obj.placeholder.c_str(),min, max, (obj.required)?" REQUIRED ":"");
@@ -1008,9 +1009,10 @@ bool tSysConfig::edit(htmlproperties obj, byte &data, byte min, byte max){
  }
  HTML+=buffer;
  }
-bool tSysConfig::edit(htmlproperties obj, int &data, int min, int max){
+bool tSysConfig::edit(htmlproperties obj, int32_t &data, int32_t min, int32_t max){
  if ( server.method() == HTTP_POST ){
   // POST functionality here, includes error handling
+  error=copyval(data,obj.name.c_str(),min,max);
  }
  if (min!=max){
  sprintf(buffer,"<input type=\"number\" name=\"%s\" label=\"%s\" value=\"%d\" placeholder=\"%s\" min=\"%d\" max=\"%d\" %s>",obj.name.c_str(),obj.label.c_str(),data,obj.placeholder.c_str(),min, max, (obj.required)?" REQUIRED ":"");} else
@@ -1022,6 +1024,7 @@ bool tSysConfig::edit(htmlproperties obj, int &data, int min, int max){
 bool tSysConfig::edit(htmlproperties obj, float &data, float min, float max){
  if ( server.method() == HTTP_POST ){
   // POST functionality here, includes error handling
+  error=copyval(data,obj.name.c_str(),min,max);
  }
  if (min!=max){
  sprintf(buffer,"<input type=\"number\" name=\"%s\" label=\"%s\" value=\"%f\" placeholder=\"%s\" min=\"%f\" max=\"%f\" %s>",obj.name.c_str(),obj.label.c_str(),data,obj.placeholder.c_str(),min, max, (obj.required)?" REQUIRED ":"");} else
@@ -1031,41 +1034,51 @@ bool tSysConfig::edit(htmlproperties obj, float &data, float min, float max){
  HTML+=buffer;
  }
 
-bool tSysConfig::password(htmlproperties obj, char* data, int size, int min, int max){
+bool tSysConfig::password(htmlproperties obj, char* data, int32_t size, int32_t min, int32_t max){
  // unlike other fields, password auto includes Label & verify dialog 
+ char p1[32];
+ char p2[32];
+ char field[32];
  if ( server.method() == HTTP_POST ){
   // POST functionality here, includes error handling
   // min, max are used to check minimum and maximum length of the password
- }
+   error=copyval(p1,obj.name.c_str(),size);
+   sprintf(field,"%s_verify",obj.name.c_str());
+   error=copyval(p2,field,size);
+}
  sprintf(buffer,"<input type=\"password\" name=\"%s\" label=\"%s\" value=\"%s\" placeholder=\"password\" %s>",obj.name.c_str(),obj.label.c_str(),data,(obj.required)?" REQUIRED ":"");
  HTML+=buffer;
  sprintf(buffer,"<input type=\"password\" name=\"%s_verify\" value=\"%s\" placeholder=\"verify password\" %s>",obj.name.c_str(),data, (obj.required)?" REQUIRED ":"");
  HTML+=buffer;
 }
-bool tSysConfig::text(htmlproperties obj, char* data, int size, int min, int max){
+bool tSysConfig::text(htmlproperties obj, char* data, int32_t size, int32_t min, int32_t max){
  if ( server.method() == HTTP_POST ){
   // POST functionality here, includes error handling
+  error=copyval(data,obj.name.c_str(),size);
  }
  sprintf(buffer,"<textarea name=\"%s\"value=\"%s\" placeholder=\"%s\" size=\"%d\" %s></textarea>",obj.name.c_str(),data,obj.placeholder.c_str(),size, (obj.required)?" REQUIRED ":"");
  HTML+=buffer;
  }
-bool tSysConfig::editemail(htmlproperties obj, char* data, int size){
+bool tSysConfig::editemail(htmlproperties obj, char* data, int32_t size){
  if ( server.method() == HTTP_POST ){
   // POST functionality here, includes error handling
- }
+   error=copyval(data,obj.name.c_str(),size);
+}
  sprintf(buffer,"<input type=\"email\" name=\"%s\" label=\"%s\" value=\"%s\" placeholder=\"%s\" %s>",obj.name.c_str(),obj.label.c_str(),data,obj.placeholder.c_str(),(obj.required)?" REQUIRED ":"");
  HTML+=buffer;
 }
-bool tSysConfig::editurl(htmlproperties obj, char* data, int size){
+bool tSysConfig::editurl(htmlproperties obj, char* data, int32_t size){
  if ( server.method() == HTTP_POST ){
   // POST functionality here, includes error handling
- }
+   error=copyval(data,obj.name.c_str(),size);
+}
  sprintf(buffer,"<input type=\"url\" name=\"%s\" label=\"%s\" value=\"%s\" placeholder=\"%s\" %s>",obj.name.c_str(),obj.label.c_str(),data,obj.placeholder.c_str(), (obj.required)?" REQUIRED ":"");
  HTML+=buffer;
 } 
-bool tSysConfig::edittel(htmlproperties obj, char* data, int size){
+bool tSysConfig::edittel(htmlproperties obj, char* data, int32_t size){
  if ( server.method() == HTTP_POST ){
   // POST functionality here, includes error handling
+  error=copyval(data,obj.name.c_str(),size);
  }
  sprintf(buffer,"<input type=\"tel\" name=\"%s\" label=\"%s\" value=\"%s\" placeholder=\"%s\" %s>",obj.name.c_str(),obj.label.c_str(),data,obj.placeholder.c_str(), (obj.required)?" REQUIRED ":"");
  HTML+=buffer;
@@ -1073,6 +1086,7 @@ bool tSysConfig::edittel(htmlproperties obj, char* data, int size){
 bool tSysConfig::editTime(htmlproperties obj, time_t &data){
  if ( server.method() == HTTP_POST ){
   // POST functionality here, includes error handling
+   error=copyval(data,obj.name.c_str());
  }
  tmElements_t atime; 
  breakTime(data, atime); 
@@ -1086,32 +1100,48 @@ bool tSysConfig::editTime(htmlproperties obj, time_t &data){
  *  without doing this, we would have to use a lot more ram to create the list before sending to the web client, this can lead to crashes
  *  when ram is constrained such as on the ESP8266
 */
-bool tSysConfig::selectList(htmlproperties obj,int &data){
+bool tSysConfig::selectList(htmlproperties obj,int32_t &data){
  if (inSelect) {selectList();}
- inSelect=s_int;
+ if ( server.method() == HTTP_POST ){
+  // POST functionality here, includes error handling
+   error=copyval(data,obj.name.c_str());
+ }
+  inSelect=s_int32_t;
  sprintf(buffer,"<select name=\"%s\" label=\"%s\" Value=\"%d\">",obj.name.c_str(),obj.label.c_str(),data);
  HTML+=buffer;
  return true;
  }
-bool tSysConfig::selectByte(htmlproperties obj,byte &data){
+bool tSysConfig::selectint8_t(htmlproperties obj,int8_t &data){
  if (inSelect) {selectList();}
- inSelect=s_byte;
- sprintf(buffer,"<select name=\"%s\" label=\"%s\" Value=\"%d\">",obj.name.c_str(),obj.label.c_str(),data);
+ inSelect=s_int8_t;
+ if ( server.method() == HTTP_POST ){
+  // POST functionality here, includes error handling
+   error=copyval(data,obj.name.c_str());
+ }
+  sprintf(buffer,"<select name=\"%s\" label=\"%s\" Value=\"%d\">",obj.name.c_str(),obj.label.c_str(),data);
  HTML+=buffer;
  return true;
  }
 bool tSysConfig::selectList(htmlproperties obj,float &data){
  if (inSelect) {selectList();}
  inSelect=s_float; 
- sprintf(buffer,"<select name=\"%s\" label=\"%s\" Value=\"%f\">",obj.name.c_str(),obj.label.c_str(),data);
+ if ( server.method() == HTTP_POST ){
+  // POST functionality here, includes error handling
+   error=copyval(data,obj.name.c_str());
+ }
+  sprintf(buffer,"<select name=\"%s\" label=\"%s\" Value=\"%f\">",obj.name.c_str(),obj.label.c_str(),data);
  HTML+=buffer;
  return true;
  }
-bool tSysConfig::selectList(htmlproperties obj,char* data, int size){
+bool tSysConfig::selectList(htmlproperties obj,char* data, int32_t size){
  if (inSelect) {selectList();}
+ if ( server.method() == HTTP_POST ){
+  // POST functionality here, includes error handling
+   error=copyval(data,obj.name.c_str(), size);
+ }
+ inSelect=s_text;
  sprintf(buffer,"<select name=\"%s\" label=\"%s\" Value=\"%s\">",obj.name.c_str(),obj.label.c_str(),data);
  HTML+=buffer; 
- inSelect=s_text;
  return true;
 }
 bool tSysConfig::selectList(){
@@ -1124,7 +1154,7 @@ void tSysConfig::label(htmlproperties obj){
  HTML+=buffer; 
  }
  }
-bool tSysConfig::optiongroup(char* name){
+bool tSysConfig::optiongroup(char const *name){
  optiongroup();// close any previous group
  inOptgroup=true;
  sprintf(buffer,"<optgroup label=\"%s\">",name); 
@@ -1143,36 +1173,56 @@ bool tSysConfig::option(float data, char *name){
  sprintf(buffer,"<option value=\"%f\" >%s</option>",data,name); 
  HTML+=buffer; 
  }
-bool tSysConfig::option(int data, char *name){
+bool tSysConfig::option(int32_t data, char *name){
  sprintf(buffer,"<option value=\"%d\" >%s</option>",data,name); 
  HTML+=buffer; 
  }
- bool tSysConfig::option(byte data, char *name){
+ bool tSysConfig::option(int8_t data, char *name){
  sprintf(buffer,"<option value=\"%d\" >%s</option>",data,name); 
  HTML+=buffer; 
  }
 bool tSysConfig::checkbox(htmlproperties obj, bool &data){
+ if ( server.method() == HTTP_POST ){
+  // POST functionality here, includes error handling
+   error=copyval(data,obj.name.c_str());
+ }
  sprintf(buffer,"<input type=\"checkbox\" name=\"%s\" value=\"%d\" label=\"%s\">",obj.name.c_str(),data,obj.label.c_str());
  HTML+=buffer;  
  }
-bool tSysConfig::checkbox(htmlproperties obj, int &data){
+bool tSysConfig::checkbox(htmlproperties obj, int32_t &data){
+ if ( server.method() == HTTP_POST ){
+  // POST functionality here, includes error handling
+   error=copyval(data,obj.name.c_str());
+ }
  sprintf(buffer,"<input type=\"checkbox\" name=\"%s\" value=\"%d\" label=\"%s\">",obj.name.c_str(),data,obj.label.c_str());
  HTML+=buffer;  
  }
-bool tSysConfig::checkbox(htmlproperties obj, char* data, int size){
+bool tSysConfig::checkbox(htmlproperties obj, char* data, int32_t size){
+ if ( server.method() == HTTP_POST ){
+  // POST functionality here, includes error handling
+   error=copyval(data,obj.name.c_str(),size);
+ }
  sprintf(buffer,"<input type=\"checkbox\" name=\"%s\" value=\"%d\" label=\"%s\">",obj.name.c_str(),data,obj.label.c_str());
  HTML+=buffer;  
  }
-bool tSysConfig::radio(htmlproperties obj, int &data){
+bool tSysConfig::radio(htmlproperties obj, int32_t &data){
+ if ( server.method() == HTTP_POST ){
+  // POST functionality here, includes error handling
+   error=copyval(data,obj.name.c_str());
+ }
  sprintf(buffer,"<input type=\"radio\" name=\"%s\" value=\"%d\" label=\"%s\">",obj.name.c_str(),data,obj.label.c_str());
  HTML+=buffer;  
  }
-bool tSysConfig::radio(htmlproperties obj, char *data, int size){
+bool tSysConfig::radio(htmlproperties obj, char *data, int32_t size){
+ if ( server.method() == HTTP_POST ){
+  // POST functionality here, includes error handling
+   error=copyval(data,obj.name.c_str(), size);
+ }
  sprintf(buffer,"<input type=\"radio\" name=\"%s\" value=\"%s\" label=\"%s\">",obj.name.c_str(),data,obj.label.c_str());
  HTML+=buffer;  
  }
  // additional html elements of significant use to us
-void tSysConfig::meter(htmlproperties obj, int value, int min, int max){
+void tSysConfig::meter(htmlproperties obj, int32_t value, int32_t min, int32_t max){
  // name is not required as this item does not return information
  if (obj.label.length()>0){
  sprintf(buffer,"<meter id=\"%s\" label=\"%s\" value=\"%d\" max=\"%d\"> %d% </meter>",obj.name.c_str(), obj.label.c_str(), value, min, max );} else {
@@ -1186,7 +1236,7 @@ void tSysConfig::meter(htmlproperties obj, float value, float min, float max){
  sprintf(buffer,"<meter id=\"%s\" value=\"%f\" max=\"%f\"> %f% </meter>", obj.name.c_str(), value, min, max );}
  HTML+=buffer; 
  }
-void tSysConfig::progress(htmlproperties obj, int value, int min, int max){
+void tSysConfig::progress(htmlproperties obj, int32_t value, int32_t min, int32_t max){
  // name is not required as this item does not return information
  if (obj.label.length()>0){
  sprintf(buffer,"<progress id=\"%s\" label=\"%s\"value=\"%d\" max=\"%d\"> %d% </progress>",obj.name.c_str(), obj.label.c_str(),value, min, max );} else {
@@ -1205,12 +1255,19 @@ void tSysConfig::details(htmlproperties obj){
  sprintf(buffer,"<details><summary>%s</summary><p>%s</p></details>", obj.label.c_str(), obj.value.c_str() );
  HTML+=buffer; 
  }
-bool tSysConfig::range(char* name, int &data){
- sprintf(buffer,"<input type=\"range\" nam\"%s\" value=\"%d\">", name, data );
+bool tSysConfig::editrange(htmlproperties obj, int32_t &data, int32_t min, int32_t max){
+ if ( server.method() == HTTP_POST ){
+  // POST functionality here, includes error handling
+   error=copyval(data,obj.name.c_str(), min, max);
+ }
+  if (min!=max){
+  sprintf(buffer,"<input type=\"range\" nam\"%s\" value=\"%d\" min=\"%d\" max=\"%d\">", obj.name.c_str(), data, min, max );} else {
+  sprintf(buffer,"<input type=\"range\" nam\"%s\" value=\"%d\">", obj.name.c_str(), data); 
+ }
  HTML+=buffer; 
 }
 // format bytes
-String tSysConfig::formatBytes(size_t bytes) {
+String tSysConfig::formatbytes(size_t bytes) {
  if (bytes < 1024) {
  return String(bytes) + "B";
  } else if (bytes < (1024 * 1024)) {
@@ -1222,8 +1279,8 @@ String tSysConfig::formatBytes(size_t bytes) {
  }
 }
 
-boolean tSysConfig::isInteger(String str){ // check the input is an integer
- for(byte i=0;i<str.length();i++){
+boolean tSysConfig::isinteger(String str){ // check the input is an integer
+ for(int8_t i=0;i<str.length();i++){
   if(!isDigit(str.charAt(i))) {
   return false;
   }
@@ -1233,22 +1290,22 @@ boolean tSysConfig::isInteger(String str){ // check the input is an integer
 boolean tSysConfig::isFloat(String str){ // check that the input is a floating point number
  String s;
  String x;
- int pos = str.indexOf(".");
- if (pos==-1){ Serial.println("simple integer"); return isInteger(str); } else {
+ int32_t pos = str.indexOf(".");
+ if (pos==-1){ Serial.println("simple integer"); return isinteger(str); } else {
  s=str.substring(0,pos);
  x=str.substring(pos+1);
- if (isInteger(s)){return isInteger(x);} 
+ if (isinteger(s)){return isinteger(x);} 
  }
  return false;
 } 
 boolean tSysConfig::isTime(String str){ // check that the input is a floating point number
  String s;
  String x;
- int pos = str.indexOf(":");
+ int32_t pos = str.indexOf(":");
  if (pos==-1){ Serial.println("simple integer"); return false; } else {
  s=str.substring(0,pos);
  x=str.substring(pos+1);
- if (isInteger(s)){return isInteger(x);} 
+ if (isinteger(s)){return isinteger(x);} 
  }
  return false;
 } 
@@ -1258,10 +1315,10 @@ boolean tSysConfig::isIP(String str){// check that the input is an IP4 class add
  String c;
  String d;
  // check for the . character, there needs to be 3 to be a valid ip4 address
- int pos = str.indexOf(".");
+ int32_t pos = str.indexOf(".");
  if (pos==-1){ return false;}
  a=str.substring(0,pos);
- int pos2 = str.indexOf(".", pos);
+ int32_t pos2 = str.indexOf(".", pos);
  if (pos2==-1){ return false;}
  b=str.substring(pos+1,pos2);
  pos = str.indexOf(".", pos2);
@@ -1269,10 +1326,10 @@ boolean tSysConfig::isIP(String str){// check that the input is an IP4 class add
  c=str.substring(pos2+1,pos);
  d=str.substring(pos+1);
  // check is the substrings are numeric, if not then its not a valid ip
- if (!isInteger(a)){ return false;}
- if (!isInteger(b)){ return false;}
- if (!isInteger(c)){ return false;}
- if (!isInteger(d)){ return false;}
+ if (!isinteger(a)){ return false;}
+ if (!isinteger(b)){ return false;}
+ if (!isinteger(c)){ return false;}
+ if (!isinteger(d)){ return false;}
  if (a.toInt()>255){ return false;}
  if (b.toInt()>255){ return false;}
  if (c.toInt()>255){ return false;}
@@ -1281,167 +1338,164 @@ boolean tSysConfig::isIP(String str){// check that the input is an IP4 class add
 }
  // copy values from post function is overloaded and has default parameters, if min-max are equal, range is ignored otherwise range checking is used
 
-int tSysConfig::copyval(byte &var, char* name, byte min, byte max){
+int32_t tSysConfig::copyval(int8_t &var, char const *name, int8_t min, int8_t max){
  String V;
- error = "";
+ error = 0;
  if (server.hasArg(name)) {
  V=server.arg(name);
- if ((V.length()<1)|(!isInteger(V))){
- error += "var ";
- error += name;
- error += " blank\r\n";
+ if ((V.length()<1)|(!isinteger(V))){
  errorcount++;
- errorclass=NaN;
+ error=NaN;
  return NaN;
  }
- var=(byte)V.toInt();
+ var=(int8_t)V.toInt();
  if(max!=min){
  if ((var<=max)&&(var>=min)){
-  errorclass = OK;
+  error = OK;
   return OK;
   }
-  error += "var ";
-  error += name;
-  error += " out of range\r\n";
   errorcount++;
-  errorclass = Range;
+  error = Range;
   return Range;
  }
  return OK; } 
  else{
- error += "var ";
- error += name;
- error += " not found\r\n";
  errorcount++;
- errorclass = NotFound;
+ error = NotFound;
  return NotFound;
  }
 }
 
-int tSysConfig::copyval(int &var, char* name, int min, int max){
+int32_t tSysConfig::copyval(int32_t &var, char const *name, int32_t min, int32_t max){
  String V;
- error = "";
+ error = 0;
  if (server.hasArg(name)) {
  V=server.arg(name);
- if ((V.length()<1)|(!isInteger(V))){
- error += "var ";
- error += name;
- error += " NaN\r\n";
+ if ((V.length()<1)|(!isinteger(V))){
  errorcount++;
- errorclass=NaN;
+ error=NaN;
  return NaN;
  }
  var=V.toInt();
  if(max!=min){
  if ((var<=max)&&(var>=min)){
-  errorclass = OK;
+  error = OK;
   return OK;
   }
-  error += "var ";
-  error += name;
-  error += " out of range\r\n";
   errorcount++;
-  errorclass = Range;
+  error = Range;
   return Range;
  }
  return OK;
  } 
  else{
- error += "var ";
- error += name;
- error += " not found\r\n";
  errorcount++;
- errorclass = NotFound;
+ error = NotFound;
  return NotFound;
  }
 }
-int tSysConfig::copyval(float &var, char* name, float min, float max){
+int32_t tSysConfig::copyval(float &var, char const *name, float min, float max){
  String V;
- error = "";
+ error = 0;
  if (server.hasArg(name)) {
  V=server.arg(name);
  if ((V.length()<1)|(!isFloat(V))){
- error += "var ";
- error += name;
- error += " blank\r\n";
  errorcount++;
- errorclass=NaN;
+ error=NaN;
  return NaN;
  }
  var=V.toFloat();
  if(max!=min){
  if ((var<=max)&&(var>=min)){
-  errorclass = OK;
+  error = OK;
   return OK;
   }
-  error += "var ";
-  error += name;
-  error += " out of range\r\n";
   errorcount++;
-  errorclass = Range;
+  error = Range;
   return Range;
  }
  return OK;
  } 
  else{
- error += "var ";
- error += name;
- error += " not found\r\n";
  errorcount++;
- errorclass = NotFound;
+ error = NotFound;
  return NotFound;
  }
 }
 
-int tSysConfig::copyval(time_t &var, char* name){
+int32_t tSysConfig::copyval(time_t &var, char const *name){
  String V;
- error = "";
+ error = 0;
  if (server.hasArg(name)) {
  V=server.arg(name);/*
  if ((V.length()<1)|(!isTime(V))){
- error += "var ";
+ 
  error += name;
  error += " NaN\r\n";
  errorcount++;
- errorclass=NaN;
+ error=NaN;
  return NaN;
  }*/
  /* var=V.toInt();
  if(max!=min){
  if ((var<=max)&&(var>=min)){
-  errorclass = OK;
+  error = OK;
   return OK;
   }
-  error += "var ";
+  
   error += name;
   error += " out of range\r\n";
   errorcount++;
-  errorclass = Range;
+  error = Range;
   return Range;
  }
  return OK;*/
  } 
  else{
- error += "var ";
- error += name;
- error += " not found\r\n";
  errorcount++;
- errorclass = NotFound;
+ error = NotFound;
  return NotFound;
  }
 }
 
-int tSysConfig::copyIP(IPAddress &var, char* name){
+int32_t tSysConfig::copyval(char* var, char const *name, int32_t size, int32_t min){
+ ///char buf[128]=""; 
+ Serial.println("copyval(char* var, char const *name, int32_t size, int32_t min)");
+ Serial.println(name);
  String V;
- error = "";
+ int32_t bytes=0;
+ if (server.hasArg(name)) {
+  Serial.println(name);
+  V=server.arg(name);
+  Serial.println(V);
+  if (min>0){if (V.length()<min){
+    Serial.println("Range min error");
+    errorcount++;
+    error = RangeLow;
+    return RangeLow;}
+  }
+  if ((V.length()+1)<=size){
+  bytes=V.length()+1;} else {bytes=size;}
+  bytes=strlcpy(var,V.c_str(), bytes); 
+  if (bytes<V.length()){
+    Serial.println("String copy error");
+    errorcount++;
+  }
+  return bytes; } 
+  else{
+  errorcount++;
+  return NotFound;
+ }
+}
+
+int32_t tSysConfig::copyIP(IPAddress &var, char const *name){
+ String V;
+ error = 0;
  if (server.hasArg(name)) {
  V=server.arg(name);
  if ((V.length()<1)|(!isTime(V))){
- error += "var ";
- error += name;
- error += " NaN\r\n";
  errorcount++;
- errorclass=NaN;
+ error=NaN;
  return NaN;
  }
  if ( var.fromString(V) ){
@@ -1449,22 +1503,19 @@ int tSysConfig::copyIP(IPAddress &var, char* name){
  } 
  }
  else {
- error += "var ";
- error += name;
- error += " not found\r\n";
  errorcount++;
- errorclass = NotFound;
+ error = NotFound;
  return NotFound;
  }
 }
 void tSysConfig::scanWiFi(){
  bool isConnected=WiFi.status() == WL_CONNECTED;
- int retries=0;
+ int32_t retries=0;
  WiFi.mode(WIFI_AP_STA);
  WiFi.disconnect();
  // scan for available networks
  n = WiFi.scanNetworks(); 
- for (int i = 0; i < n; i++)
+ for (int32_t i = 0; i < n; i++)
  {
  WiFi.getNetworkInfo(i, ssid, encryptionType, RSSI, BSSID, channel, isHidden);
  Serial.printf("%d: %s, Ch:%d (%ddBm) %s %s\r\n", i + 1, ssid.c_str(), channel, RSSI, encryptionType == ENC_TYPE_NONE ? "open" : "", isHidden ? "hidden" : "");
