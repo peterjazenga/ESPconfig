@@ -135,54 +135,58 @@ byte APchannel = 11;
 unsigned int localPort = 2390;  // local port to listen for UDP packets
 
 // main classes for Configuration management, time management and NAT
-enum error {ecRange,ecRequired,ecNaN,ecPassword};
 enum s_class {s_none, s_byte, s_int32_t, s_float, s_text};// used by the select functions
+enum eSensorClass {s_undefined, s_NTC, s_BMP, s_BME, s_ADC, s_Freq, s_PWM, s_Weight};
 
 typedef std::function<void(time_t trigger)> TTimerFunction;
  
 class tSysConfig : ESP8266WebServer {
  private:
- dataframe _data; // the data is contained in the private section as its not meant to be directly interatecd with by the main program
- dataframe _formdata; // the data contained herein is used to process the form data
+  dataframe _data; // the data is contained in the private section as its not meant to be directly interatecd with by the main program
+  dataframe _formdata; // the data contained herein is used to process the form data
  // LED information for heartbeat LED
- long lastBlinkMillis;
- int32_t blinkstate=0;// defines which blink is used, 0-3 are slow 4-7 are fast blink
- int32_t LEDstate=0;//inidicates which bit of the pattern is in use
+  long lastBlinkMillis;
+  int32_t blinkstate=0;// defines which blink is used, 0-3 are slow 4-7 are fast blink
+  int32_t LEDstate=0;//inidicates which bit of the pattern is in use
  // WiFi connection information
- long currentMillis = 0;
- long lastScanMillis;
- long lastConnectMillis;
+  long currentMillis = 0;
+  long lastScanMillis;
+  long lastConnectMillis;
  // network scanning info
- bool STAconnected=false;
- int32_t n=-2;
- String ssid;
- uint8_t encryptionType;
- int32_t RSSI;
- uint8_t* BSSID;
- int32_t channel;
- bool isHidden;
-protected: 
- uint32_t realSize;
- uint32_t ideSize;
- FlashMode_t ideMode;
- int32_t error; // used singularly during form processing, each new element resets this
- int32_t errorcount;
- String HTML; // used to build the web page
- char buffer[256];
- bool inForm;
- bool inFieldset;
- s_class inSelect; // if we are in a select group we need to know the class so it processes the correct information
- bool inOptgroup;
- bool lightHTML;
- public:
- int32_t configPin = D2;
- char *author;
- char *copyright;
- char *version;
- int32_t charsize;
- int32_t major;
- int32_t minor;
- bool hasBluetooth=false;
+  bool STAconnected=false;
+  int32_t n=-2;
+  String ssid;
+  uint8_t encryptionType;
+  int32_t RSSI;
+  uint8_t* BSSID;
+  int32_t channel;
+  bool isHidden;
+ protected: 
+  uint32_t realSize;
+  uint32_t ideSize;
+  FlashMode_t ideMode;
+  int32_t error; // used singularly during form processing, each new element resets this
+  int32_t errorcount;
+  String HTML; // used to build the web page
+  char buffer[256];
+  bool inForm;
+  bool inFieldset;
+  s_class inSelect; // if we are in a select group we need to know the class so it processes the correct information
+  bool inOptgroup;
+  bool lightHTML;
+  public:
+  int32_t configPin = D2;
+  char *author;
+  char *copyright;
+  char *version;
+  int32_t charsize;
+  int32_t major;
+  int32_t minor;
+  bool hasBluetooth=false;
+  // the sensor classes are for future use
+  eSensorClass SensorClass=s_undefined;
+  String SensorName;
+  int SensorFrequency=100; // time in milliseconds
  public:
 // this is API to the Config system but the only routines that the user is required to utilize are tSysConfig(); & run();
 // if desired, the device name can be changed prior to calling init
@@ -371,8 +375,8 @@ void tSysConfig::initWebserver() {
 
 bool tSysConfig::readConfig(){
 // read the parameters from flash
- Serial.println("Opening SPIFFS /Config.bin");
- File ConfigFile = SPIFFS.open("/Config.bin", "r");
+ Serial.println("Opening SPIFFS /config.bin");
+ File ConfigFile = SPIFFS.open("/config.bin", "r");
  if (!ConfigFile) {
  Serial.println("Failed to open Config file, attempting to load manufacturer's configuration");
  ConfigFile = SPIFFS.open("/defaults.bin", "r");
@@ -390,7 +394,6 @@ size_t size = ConfigFile.size();
 }
 
 void tSysConfig::initConfig() {
- Serial.println("initConfig()");
  if(!SPIFFS.begin())
  {
  Serial.println("SPIFFS Initialization...failed");
@@ -516,11 +519,12 @@ bool tSysConfig::writeConfig() {
  _data.burntime=time(nullptr);
  configFile.write((byte*) &_data, sizeof(_data));
  configFile.close();
+ Serial.println("config.bin written");
  return readConfig();
 }
 
 void tSysConfig::updateConfig() {
- 
+ // intended to reinitialize the ESP without rebooting
 }
 
 void tSysConfig::blink() {
@@ -697,8 +701,8 @@ void tSysConfig::Config(){
 
  fieldset();
  form();
+   if ( server.method() == HTTP_POST ){ writeConfig();}
  HTML+=F("</body></html>");
-
  server.send(200, "text/html", HTML);
  HTML=""; webobj.name="", webobj.css="";webobj.label=""; webobj.placeholder="";
 }
@@ -710,7 +714,8 @@ void tSysConfig::Sensors(){
  form(webobj);
  
  form();
- HTML+=F("</body></html>");
+    if ( server.method() == HTTP_POST ){ writeConfig();}
+HTML+=F("</body></html>");
  server.send(200, "text/html", HTML);
  HTML=""; webobj.name="", webobj.css="";webobj.label=""; webobj.placeholder="";
 }
@@ -749,8 +754,8 @@ void tSysConfig::Timers(){
    }
    HTML+=buffer;
   }// else {++dis;}// dont add a variable, instead we give a count in the json object to let the script know how many blank fields to add
-  
  }
+
   sprintf(buffer,"]}';\r\n");
 // dynamically create the form 
  HTML+=buffer;
@@ -761,6 +766,7 @@ void tSysConfig::Timers(){
  HTML+=F("}\r\n  document.getElementById(\"tt\").innerHTML = \"<TR><TD>ID</td><td>Start</td><td>Stop</td><td><abbr title=\\\"Day of week\\\">DOW<abbr></TD></tr>\"+x; </script>");
 
  form();
+   if ( server.method() == HTTP_POST ){ writeConfig();}
  HTML+=F("</body></html>"); 
  server.send(200, "text/html", HTML);
  HTML=""; webobj.name="", webobj.css="";webobj.label=""; webobj.placeholder="";
@@ -782,7 +788,7 @@ void tSysConfig::ACL(){
  password(webobj,_data.userPass,32);
  
  form();
-
+   if ( server.method() == HTTP_POST ){ writeConfig();}
  HTML+=F("</body></html>"); 
  server.send(200, "text/html", HTML);HTML=""; webobj.name="", webobj.css="";webobj.label=""; webobj.placeholder="";
 }
@@ -813,7 +819,8 @@ void tSysConfig::Register(){
  webobj.placeholder="Device Name";
  edit(webobj,_data.NodeName,32);
  form();
- HTML+=F("</body></html>"); 
+    if ( server.method() == HTTP_POST ){ writeConfig();}
+HTML+=F("</body></html>"); 
  server.send(200, "text/html", HTML);HTML=""; webobj.name="", webobj.css="";webobj.label=""; webobj.placeholder="";
 }
 void tSysConfig::MQTT(){ 
@@ -872,6 +879,7 @@ void tSysConfig::Sysinfo(){
  sprintf(buffer," <tr><td>Compilation date</td><td>%s @ %s</td></tr>",__DATE__,__TIME__);
  HTML+=buffer;
  
+   if ( server.method() == HTTP_POST ){ writeConfig();}
  HTML+=F("</body></html>");
  server.send(200, "text/html", HTML);HTML=""; webobj.name="", webobj.css="";webobj.label=""; webobj.placeholder=""; 
 }
@@ -1038,6 +1046,7 @@ bool tSysConfig::password(htmlproperties obj, char* data, int32_t size, int32_t 
    error=copyval(p1,obj.name.c_str(),size);
    sprintf(field,"%s_verify",obj.name.c_str());
    error=copyval(p2,field,size);
+   if (strcmp(p1,p2)==0){ strncat(data,p1, size); }
 }
  sprintf(buffer,"<input type=\"password\" name=\"%s\" label=\"%s\" value=\"%s\" placeholder=\"password\" %s>",obj.name.c_str(),obj.label.c_str(),data,(obj.required)?" REQUIRED ":"");
  HTML+=buffer;
@@ -1423,12 +1432,9 @@ int32_t tSysConfig::copyval(time_t &var, char const *name){
  error = 0;
  tmElements_t timeVal; 
  time_t t;
- Serial.print(name);
- Serial.print("-time:");
  
 if (server.hasArg(name)) {
  V=server.arg(name);
- Serial.println(V);
  if (!V.length()) {
   error = InvalidTime;
   return error;
@@ -1437,24 +1443,19 @@ if (server.hasArg(name)) {
   if (pos==-1){ error=InvalidTime; return error; } else {
   H=V.substring(0,pos);
   M=V.substring(pos+1);
-  Serial.println(H);
-  Serial.println(M);
+
   if (!isinteger(H) || !isinteger(M)){ error=InvalidTime; return error; }
  }
   timeVal.Second=0;
   timeVal.Hour=(uint8_t)H.toInt();
-  Serial.println(timeVal.Hour);
   timeVal.Minute=(uint8_t)M.toInt();
-  Serial.println(timeVal.Minute);
   timeVal.Wday=0;
   timeVal.Day=0;
   timeVal.Month=0;
   timeVal.Year=0;
+  // the date variable is offset to 1970 consequently we must compensate to maintain the correct values
+  // without the correction, significant time errors occur
   var=86400+makeTime(timeVal);
-  /*Serial.println("===========");
-  Serial.println(var);
-  var=t+86400;
-  Serial.println(t);*/
  } 
  else{
  errorcount++;
@@ -1465,16 +1466,11 @@ if (server.hasArg(name)) {
 
 int32_t tSysConfig::copyval(char* var, char const *name, int32_t size, int32_t min){
  ///char buf[128]=""; 
- Serial.println("copyval(char* var, char const *name, int32_t size, int32_t min)");
- Serial.println(name);
  String V;
  int32_t bytes=0;
  if (server.hasArg(name)) {
-  Serial.println(name);
   V=server.arg(name);
-  Serial.println(V);
   if (min>0){if (V.length()<min){
-    Serial.println("Range min error");
     errorcount++;
     error = RangeLow;
     return RangeLow;}
@@ -1483,7 +1479,6 @@ int32_t tSysConfig::copyval(char* var, char const *name, int32_t size, int32_t m
   bytes=V.length()+1;} else {bytes=size;}
   bytes=strlcpy(var,V.c_str(), bytes); 
   if (bytes<V.length()){
-    Serial.println("String copy error");
     errorcount++;
   }
   return bytes; } 
