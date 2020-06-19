@@ -41,7 +41,7 @@
 typedef struct {
  time_t startTime;
  time_t endTime;
- uint8_t dow;// used as a set of flags to define what day of the week its active
+ byte dow;// used as a set of flags to define what day of the week its active
  // the msb is the enable bit for the timer
 } ttimer;
 
@@ -57,23 +57,23 @@ char APpassword[32];
 IPAddress ip;
 IPAddress gateway;
 IPAddress subnet;
-int8_t APchannel;
+byte APchannel;
 char NTPserverValue[128];
 char BLEname[32];
 char BLEpassword[32];
-int8_t ConfigPage;
-int8_t BLEConfig; 
-int8_t APconfig; 
-int8_t sensorConfig;
-int8_t timerConfig;
-int8_t TZ; // defaults to GMT, handles time zone
+byte ConfigPage;
+byte BLEConfig; 
+byte APconfig; 
+byte sensorConfig;
+byte timerConfig;
+byte TZ; // defaults to GMT, handles time zone
 char NTPserver[128];
 float setPoint; // also used as setPoint for PID loops
 float rangeValue;
 time_t min_on;
 time_t max_on;
 time_t min_off;
-int8_t OTA;
+byte OTA;
 char OTApass[32];
 float iceGuard; //used by heating and cooling to prevent icing, must be >0 to be active
 bool activeHigh; // heating activates when temperature drops below the lower trigger value
@@ -131,12 +131,12 @@ typedef struct {
 IPAddress ip(192,168,4,1);
 IPAddress gateway(192,168,4,1);
 IPAddress subnet(255,255,255,0);
-int8_t APchannel = 11;
+byte APchannel = 11;
 unsigned int localPort = 2390;  // local port to listen for UDP packets
 
 // main classes for Configuration management, time management and NAT
 enum error {ecRange,ecRequired,ecNaN,ecPassword};
-enum s_class {s_none, s_int8_t, s_int32_t, s_float, s_text};// used by the select functions
+enum s_class {s_none, s_byte, s_int32_t, s_float, s_text};// used by the select functions
 
 typedef std::function<void(time_t trigger)> TTimerFunction;
  
@@ -173,10 +173,6 @@ protected:
  bool inFieldset;
  s_class inSelect; // if we are in a select group we need to know the class so it processes the correct information
  bool inOptgroup;
-/* int32_t inDiv; // divisions can be nested
- bool int32_table[4];// there are 5 flags corresponding to Table, THead, TR, TD & TFoot
- bool inUL;
- bool inOL;*/
  bool lightHTML;
  public:
  int32_t configPin = D2;
@@ -219,7 +215,7 @@ protected:
  boolean isIP(String str);
 
  // copy values from post function is overloaded and has default parameters, if min-max are equal, range is ignored otherwise range checking is used
- int32_t copyval(int8_t &var, char const *name, int8_t min=0, int8_t max=0);
+ int32_t copyval(byte &var, char const *name, byte min=0, byte max=0);
  int32_t copyval(int32_t &var, char const *name, int32_t min=0, int32_t max=0);
  int32_t copyval(float &var, char const *name, float min=0, float max=0);
  int32_t copyval(char* var, char const *name, int32_t size, int32_t min=0);
@@ -239,7 +235,7 @@ protected:
  bool editemail(htmlproperties obj, char* data, int32_t size);
  bool edittel(htmlproperties obj, char* data, int32_t size);
  bool editTime(htmlproperties obj, time_t &data);
- bool edit(htmlproperties obj, int8_t &data, int8_t min=0, int8_t max=0);
+ bool edit(htmlproperties obj, byte &data, byte min=0, byte max=0);
  bool edit(htmlproperties obj, int32_t &data, int32_t min=0, int32_t max=0);
  bool edit(htmlproperties obj, float &data, float min=0.0, float max=0.0);
  bool edit(htmlproperties obj, time_t &data, time_t min=0, time_t max=0);
@@ -248,7 +244,7 @@ protected:
  bool text(htmlproperties obj, char* data, int32_t size, int32_t min=0, int32_t max=0);
 
  bool selectList(htmlproperties obj,int32_t &data);
- bool selectint8_t(htmlproperties obj,int8_t &data);
+ bool selectbyte(htmlproperties obj,byte &data);
  bool selectList(htmlproperties obj,float &data); 
  bool selectList(htmlproperties obj,char* data, int32_t size);// using this forces options to use the name field as value
  bool selectList();// terminates the list
@@ -256,7 +252,7 @@ protected:
  bool optiongroup(); //terminates the group
 
  bool option(bool data, char *name);
- bool option(int8_t data, char *name);
+ bool option(byte data, char *name);
  bool option(int32_t data, char *name);
  bool option(float data, char *name);
  bool option(char* data, char *name);
@@ -445,12 +441,12 @@ void tSysConfig::initConfig() {
 } 
 }
 void tSysConfig::initWiFi(){
- int8_t retries = 0;
+ byte retries = 0;
  WiFi.mode(WIFI_AP_STA);
  WiFi.disconnect();
  // scan for available networks
  scanWiFi();
- for ( uint8_t i = 0; i < 5; i++ ) {
+ for ( byte i = 0; i < 5; i++ ) {
  WiFiMulti.addAP(_data.AccessPoints[i].WiFiname, _data.AccessPoints[i].WiFipassword);
  }
  WiFi.beginSmartConfig();
@@ -653,7 +649,7 @@ void tSysConfig::Config(){
  webobj.label=F("Ap Configuration");
  webobj.placeholder="";
  // the fun part is to put known networks at the top of the list, that means searching through and comparing to those stored in memory
- selectint8_t(webobj,_data.APconfig);
+ selectbyte(webobj,_data.APconfig);
  option(0,"Disabled");
  option(1, "Active on boot");
  option(2, "Always active");
@@ -671,7 +667,7 @@ void tSysConfig::Config(){
  password(webobj,_data.BLEpassword,32);
  webobj.name=F("BLEconfig");
  webobj.label=F("BLE configration:");
- selectint8_t(webobj,_data.BLEConfig);
+ selectbyte(webobj,_data.BLEConfig);
  option(-1,"Disabled");
  option(0, "Sensors only");
  option(1, "All");
@@ -691,7 +687,7 @@ void tSysConfig::Config(){
  fieldset("E"); 
  webobj.name="OTA";
  webobj.label="OTA configuration:";
- selectint8_t(webobj,_data.OTA);
+ selectbyte(webobj,_data.OTA);
  option(0,"Disabled");
  option(1, "5 minutes");
  option(2, "Always on");
@@ -730,9 +726,18 @@ void tSysConfig::Timers(){
  *  use a variable to tell the script how many placeholders to enter for the disabled/blank alarms
 */
  tmElements_t stime,etime; 
-  int dis=0;
+ char name[16];
  for(int i = 0; i<16 ;i++) 
  { 
+  if ( server.method() == HTTP_POST ){
+   sprintf(name,"st_%d",i);
+   error=copyval(_data.timers[i].startTime,name);
+   sprintf(name,"et_%d",i);
+   error=copyval(_data.timers[i].endTime,name);
+   sprintf(name,"d_%d",i);
+   error=copyval(_data.timers[i].dow,name);
+ }
+  
  // if (_data.timers[i].startTime!=_data.timers[i].endTime) 
   {
    // split the time variable
@@ -746,13 +751,13 @@ void tSysConfig::Timers(){
   }// else {++dis;}// dont add a variable, instead we give a count in the json object to let the script know how many blank fields to add
   
  }
-  sprintf(buffer,"],\"dis\":%2d}';\r\n",dis);
+  sprintf(buffer,"]}';\r\n");
 // dynamically create the form 
  HTML+=buffer;
  HTML+=F("var times = JSON.parse(time);\r\n  id=0;\r\n  for (i in times.alarms) {\r\n ++id; x+=\"<tr><td>\"+ id +\"</td><td><input type=\\\"time\\\" name=\\\"st_\"+i+");
  HTML+=F("\"\\\" value=\\\"\" + times.alarms[i][0] + \"\\\"></td><td><input type=\\\"time\\\" name=\\\"et_\"+i+\"\\\" value=\\\"\" + times.alarms[i][1] +");  
  HTML+=F("\"\\\"></td><td><select name=\\\"d_\"+i+\"\\\" value=\\\"\" + times.alarms[i][2]+");
- HTML+=F("\"\\\"><option value=-1>Disabled</option><option value=0>Mon</option><option value=1>Tue</option><option value=2>Wed</option><option value=3>Thu</option><option value=4>Fri</option><option value=5>Sat</option><option value=6>Sun</option><option value=7>Daily</option><option value=8>Once</option></select></td></tr>\";");
+ HTML+=F("\"\\\"><option value=0>Disabled</option><option value=1>Sun</option><option value=2>Mon</option><option value=3>Tue</option><option value=4>Wed</option><option value=5>Thu</option><option value=6>Fri</option><option value=7>Sat</option><option value=8>Daily</option><option value=9>Once</option></select></td></tr>\";");
  HTML+=F("}\r\n  document.getElementById(\"tt\").innerHTML = \"<TR><TD>ID</td><td>Start</td><td>Stop</td><td><abbr title=\\\"Day of week\\\">DOW<abbr></TD></tr>\"+x; </script>");
 
  form();
@@ -774,19 +779,7 @@ void tSysConfig::ACL(){
  webobj.name="lname";
  webobj.label="&#128272";
  webobj.placeholder="Password";
- password(webobj,_data.userPass,32);/*
- webobj.name="email";
- webobj.label="&#9993";
- webobj.placeholder="Email address";
- editemail(webobj,_data.userEmail,128);
- webobj.name="phone";
- webobj.label="&#9742";
- webobj.placeholder="Phone number including IDD";
- edittel(webobj,_data.phone,32);
- webobj.name="devname";
- webobj.label="&#128397";
- webobj.placeholder="Device Name";
- edit(webobj,_data.NodeName,32);*/
+ password(webobj,_data.userPass,32);
  
  form();
 
@@ -997,7 +990,7 @@ bool tSysConfig::edit(htmlproperties obj, char* data, int32_t size){
  sprintf(buffer,"<input type=\"text\" name=\"%s\" label=\"%s\" value=\"%s\" placeholder=\"%s\" size=\"%d\" %s>",obj.name.c_str(),obj.label.c_str(),data,obj.placeholder.c_str(),size, (obj.required)?" REQUIRED ":"");
  HTML+=buffer;
 }
-bool tSysConfig::edit(htmlproperties obj, int8_t &data, int8_t min, int8_t max){
+bool tSysConfig::edit(htmlproperties obj, byte &data, byte min, byte max){
  if ( server.method() == HTTP_POST ){
   // POST functionality here, includes error handling
   error=copyval(data,obj.name.c_str(),min,max);
@@ -1111,9 +1104,9 @@ bool tSysConfig::selectList(htmlproperties obj,int32_t &data){
  HTML+=buffer;
  return true;
  }
-bool tSysConfig::selectint8_t(htmlproperties obj,int8_t &data){
+bool tSysConfig::selectbyte(htmlproperties obj,byte &data){
  if (inSelect) {selectList();}
- inSelect=s_int8_t;
+ inSelect=s_byte;
  if ( server.method() == HTTP_POST ){
   // POST functionality here, includes error handling
    error=copyval(data,obj.name.c_str());
@@ -1177,7 +1170,7 @@ bool tSysConfig::option(int32_t data, char *name){
  sprintf(buffer,"<option value=\"%d\" >%s</option>",data,name); 
  HTML+=buffer; 
  }
- bool tSysConfig::option(int8_t data, char *name){
+ bool tSysConfig::option(byte data, char *name){
  sprintf(buffer,"<option value=\"%d\" >%s</option>",data,name); 
  HTML+=buffer; 
  }
@@ -1280,7 +1273,7 @@ String tSysConfig::formatbytes(size_t bytes) {
 }
 
 boolean tSysConfig::isinteger(String str){ // check the input is an integer
- for(int8_t i=0;i<str.length();i++){
+ for(byte i=0;i<str.length();i++){
   if(!isDigit(str.charAt(i))) {
   return false;
   }
@@ -1338,7 +1331,7 @@ boolean tSysConfig::isIP(String str){// check that the input is an IP4 class add
 }
  // copy values from post function is overloaded and has default parameters, if min-max are equal, range is ignored otherwise range checking is used
 
-int32_t tSysConfig::copyval(int8_t &var, char const *name, int8_t min, int8_t max){
+int32_t tSysConfig::copyval(byte &var, char const *name, byte min, byte max){
  String V;
  error = 0;
  if (server.hasArg(name)) {
@@ -1348,7 +1341,7 @@ int32_t tSysConfig::copyval(int8_t &var, char const *name, int8_t min, int8_t ma
  error=NaN;
  return NaN;
  }
- var=(int8_t)V.toInt();
+ var=(byte)V.toInt();
  if(max!=min){
  if ((var<=max)&&(var>=min)){
   error = OK;
@@ -1425,31 +1418,43 @@ int32_t tSysConfig::copyval(float &var, char const *name, float min, float max){
 
 int32_t tSysConfig::copyval(time_t &var, char const *name){
  String V;
+ String H;
+ String M;
  error = 0;
- if (server.hasArg(name)) {
- V=server.arg(name);/*
- if ((V.length()<1)|(!isTime(V))){
+ tmElements_t timeVal; 
+ time_t t;
+ Serial.print(name);
+ Serial.print("-time:");
  
- error += name;
- error += " NaN\r\n";
- errorcount++;
- error=NaN;
- return NaN;
- }*/
- /* var=V.toInt();
- if(max!=min){
- if ((var<=max)&&(var>=min)){
-  error = OK;
-  return OK;
-  }
-  
-  error += name;
-  error += " out of range\r\n";
-  errorcount++;
-  error = Range;
-  return Range;
+if (server.hasArg(name)) {
+ V=server.arg(name);
+ Serial.println(V);
+ if (!V.length()) {
+  error = InvalidTime;
+  return error;
  }
- return OK;*/
+  int pos = V.indexOf(":");
+  if (pos==-1){ error=InvalidTime; return error; } else {
+  H=V.substring(0,pos);
+  M=V.substring(pos+1);
+  Serial.println(H);
+  Serial.println(M);
+  if (!isinteger(H) || !isinteger(M)){ error=InvalidTime; return error; }
+ }
+  timeVal.Second=0;
+  timeVal.Hour=(uint8_t)H.toInt();
+  Serial.println(timeVal.Hour);
+  timeVal.Minute=(uint8_t)M.toInt();
+  Serial.println(timeVal.Minute);
+  timeVal.Wday=0;
+  timeVal.Day=0;
+  timeVal.Month=0;
+  timeVal.Year=0;
+  var=86400+makeTime(timeVal);
+  /*Serial.println("===========");
+  Serial.println(var);
+  var=t+86400;
+  Serial.println(t);*/
  } 
  else{
  errorcount++;
