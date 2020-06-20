@@ -30,6 +30,5 @@ Some amateur code is very good, unfortunately I would not class the available we
 <p>I am currently developing this as FOSS under the Mozilla license.</p>
 <p><a href="https://github.com/peterjazenga/ESPconfig" target="_blank" rel="noopener">https://github.com/peterjazenga/ESPconfig</a></p>
 <p>&nbsp;</p>
-<p>I have found one config system which has a wide range of features but due to GPL licence it is unsuitable for commercial use</P>
 
 Built against time library from https://github.com/PaulStoffregen/Time or http://playground.arduino.cc/Code/Time version 1.5.0
