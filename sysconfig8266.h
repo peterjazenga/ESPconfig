@@ -15,7 +15,7 @@
 #include <ESP8266WebServer.h>
 #include <ESP8266mDNS.h>
 #include <WiFiUdp.h>
-#include <ArduinoJson.h>
+//#include <ArduinoJson.h>
 #include <ArduinoOTA.h>
 #include <FS.h>   //Include File System Headers
 #include <time.h>  // time() ctime()
@@ -283,6 +283,8 @@ class tSysConfig : ESP8266WebServer {
  void Config();
  void Sensors();
  void Timers();
+ void Time();
+ void OTA();
  void ACL(); 
  void Register();
  void MQTT();
@@ -358,6 +360,8 @@ void tSysConfig::initWebserver() {
  server.on("/config.html", [&]{ Config(); });
  server.on("/sensor.html", [&]{ Sensors(); });
  server.on("/timer.html", [&]{ Timers(); });
+ server.on("/time.html", [&]{ Time(); });
+ server.on("/update.html", [&]{ OTA(); });
  server.on("/acl.html", [&]{ ACL(); });
  server.on("/register.html", [&]{ Register(); });
  server.on("/mqtt.html", [&]{ MQTT(); });
@@ -588,10 +592,10 @@ void tSysConfig::Config(){
  HTML+=F("<link rel=\"stylesheet\" type=\"text/css\" href=\"w3.css\">");
  HTML+=F("<script type=\"text/javascript\" src=\"sc.js\"></script>");
  HTML+=F("</head><body onload=\"rewrite()\"><div class=\"w3-container w3-blue\">");
- HTML+=F("System configuration <button onclick=\"openTab('A')\">WiFi connection</button>");
+ HTML+=F("WiFi configuration <button onclick=\"openTab('A')\">WiFi connection</button>");
  HTML+=F("<button onclick=\"openTab('B')\">AP</button>");
  if (hasBluetooth){ HTML+=F("<button onclick=\"openTab('C')\">Bluetooth</button>");}
- HTML+=F("<button onclick=\"openTab('D')\">Time</button><button onclick=\"openTab('E')\">Updates</button></div>");
+ HTML+=F("</div>");
  
  webobj.css=F("w3-container w3-card-4 w3-light-grey w3-text-blue w3-margin");
  webobj.value="";
@@ -678,7 +682,32 @@ void tSysConfig::Config(){
  selectList();
  }
  
- fieldset("D");
+ fieldset();
+ form();
+   if ( server.method() == HTTP_POST ){ writeConfig();}
+ HTML+=F("</body></html>");
+ server.send(200, "text/html", HTML);
+ HTML=""; webobj.name="", webobj.css="";webobj.label=""; webobj.placeholder="";
+}
+void tSysConfig::Time(){ 
+ HTML=F("<!DOCTYPE html><html><head><meta charset=\"UTF-8\"><title>ESP Config Page</title><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">");
+ HTML+=F("<link rel=\"stylesheet\" type=\"text/css\" href=\"w3.css\">");
+ HTML+=F("<script type=\"text/javascript\" src=\"sc.js\"></script>");
+ HTML+=F("</head><body onload=\"rewrite()\"><div class=\"w3-container w3-blue\">");
+ HTML+=F("Time settings</div>");
+ 
+ webobj.css=F("w3-container w3-card-4 w3-light-grey w3-text-blue w3-margin");
+ webobj.value="";
+ webobj.placeholder="";
+ webobj.label="";
+ webobj.name="";
+ webobj.required=false;
+ webobj.inlineJS="";
+ webobj.functionalJS="";
+ webobj.hint="";
+ form(webobj);
+ 
+ fieldset("A");
  webobj.name=F("NTPserverValue");
  webobj.label=F("NTP server:");
  webobj.placeholder=F("must be a valid time server such as north-america.pool.ntp.org");
@@ -688,7 +717,32 @@ void tSysConfig::Config(){
  webobj.placeholder=F("value in minutes");
  edit(webobj,_data.TZ);
 
- fieldset("E"); 
+ form();
+   if ( server.method() == HTTP_POST ){ writeConfig();}
+ HTML+=F("</body></html>");
+ server.send(200, "text/html", HTML);
+ HTML=""; webobj.name="", webobj.css="";webobj.label=""; webobj.placeholder="";
+}
+void tSysConfig::OTA(){ 
+ HTML=F("<!DOCTYPE html><html><head><meta charset=\"UTF-8\"><title>ESP Config Page</title><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">");
+ HTML+=F("<link rel=\"stylesheet\" type=\"text/css\" href=\"w3.css\">");
+ HTML+=F("<script type=\"text/javascript\" src=\"sc.js\"></script>");
+ HTML+=F("</head><body onload=\"rewrite()\"><div class=\"w3-container w3-blue\">");
+ HTML+=F("Bios Updates</div>");
+ 
+ webobj.css=F("w3-container w3-card-4 w3-light-grey w3-text-blue w3-margin");
+ webobj.value="";
+ webobj.placeholder="";
+ webobj.label="";
+ webobj.name="";
+ webobj.required=false;
+ webobj.inlineJS="";
+ webobj.functionalJS="";
+ webobj.hint="";
+ form(webobj);
+
+ fieldset("A");
+
  webobj.name="OTA";
  webobj.label="OTA configuration:";
  selectbyte(webobj,_data.OTA);
