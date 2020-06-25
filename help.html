@@ -18,7 +18,7 @@ To keep the interface consistent and predictable, your menu link needs to includ
 <a href="https://www.w3schools.com/charsets/ref_utf_symbols.asp" target="_blank">https://www.w3schools.com/charsets/ref_utf_symbols.asp</a> provides excellent reference to unicode characters<br>
 sysConfig uses unicode character encoding to provide icons for its menu structure, this is paricularly well suited to ESP and other embedded devices as it reduces the data storage and number of files required to achieve an attractive UI<br>
 <br>
-Memory constraints are particularly tight on the ESP8266 and creating files of more than 4k in code will result in frequent crashes, examine how the timers page is built and how it is rendered using javascript, also to avoid file size issues, use static html files wherever possible, use dynamic pages only for forms amd rendering variable data<br>
+Memory constraints are particularly tight on the ESP8266 and creating files of more than 4k in code will result in frequent crashes, examine how the timers page is built and how it is rendered using javascript, also to avoid file size issues, use static html files wherever possible, use dynamic pages only for forms and rendering variable data<br>
 tsysConfig contains a number of form processing elements to support form generation and data processing, these are type checked and where range values are provided, also range checked<br>
 Use is straightforward and it makes form creation very easy 
 </div><br>
@@ -42,10 +42,13 @@ Use is straightforward and it makes form creation very easy
    password(webobj,_data.userPass,32);<br>
    // complete the form, this includes the save button for us<br>
    form();<br>
-     if ( server.method() == HTTP_POST ){ your_routine();<br>}
+   // if the data is being posted, it is processed as we recreate the page elements so the form reflects the current data<br>
+   // storing the data to the variable is automatically done by the form utilities<br>
+     if ( server.method() == HTTP_POST ){ your_routine();<br>}// additional processing of the variables
    HTML+=F("&lt/body&gt&lt/html&gt");<br> 
    server.send(200, "text/html", HTML);<br>HTML="";<br> webobj.name="";<br>s webobj.css="";<br>webobj.label="";<br> webobj.placeholder="";<br></p>
-  </details>
+  </details><BR>
+    To put a logo onto the 404 page is a bit more of a challenge, I used <a href="https://html.imageonline.co/" target="_blank">https://html.imageonline.co/</a> to convert my image file to inline text, I then pasted this into my 404 page, this ensures the 404 page loads even if files are missing<br>
 
 </div>
 
