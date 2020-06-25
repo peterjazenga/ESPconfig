@@ -514,6 +514,9 @@ void tSysConfig::initWiFi(){
 if (WiFi.status() != WL_CONNECTED){ 
   WiFi.softAP(_data.APname, _data.APpassword, _data.APchannel); 
   Serial.println(F("WiFi AP started"));} 
+  Serial.println(_data.APname);
+  Serial.println(_data.APpassword);
+  Serial.println(_data.APchannel);
 }
 
 bool tSysConfig::writeConfig() {
@@ -847,7 +850,12 @@ void tSysConfig::ACL(){
  form();
    if ( server.method() == HTTP_POST ){ writeConfig();}
  HTML+=F("</body></html>"); 
- server.send(200, "text/html", HTML);HTML=""; webobj.name="", webobj.css="";webobj.label=""; webobj.placeholder="";
+ server.send(200, "text/html", HTML);
+ HTML=""; 
+ webobj.name=""; 
+ webobj.css="";
+ webobj.label=""; 
+ webobj.placeholder="";
 }
 void tSysConfig::Register(){ 
  HTML=F("<!DOCTYPE html><html><head><meta charset=\"UTF-8\"><title>ESP Timers Page</title><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">");
@@ -935,8 +943,8 @@ void tSysConfig::Sysinfo(){
  HTML+=buffer;
  sprintf(buffer," <tr><td>Compilation date</td><td>%s @ %s</td></tr>",__DATE__,__TIME__);
  HTML+=buffer;
- 
-   if ( server.method() == HTTP_POST ){ writeConfig();}
+ // uptime
+
  HTML+=F("</body></html>");
  server.send(200, "text/html", HTML);HTML=""; webobj.name="", webobj.css="";webobj.label=""; webobj.placeholder=""; 
 }
@@ -1111,7 +1119,7 @@ bool tSysConfig::password(htmlproperties obj, char* data, int32_t size, int32_t 
    error=copyval(p1,obj.name.c_str(),size);
    sprintf(field,"%s_verify",obj.name.c_str());
    error=copyval(p2,field,size);
-   if (strcmp(p1,p2)==0){ strncat(data,p1, size); }
+   if (strcmp(p1,p2)==0){ error=copyval(data,obj.name.c_str(),size); }
 }
  sprintf(buffer,"<input type=\"password\" name=\"%s\" label=\"%s\" value=\"%s\" placeholder=\"password\" %s>",obj.name.c_str(),obj.label.c_str(),data,(obj.required)?" REQUIRED ":"");
  HTML+=buffer;
