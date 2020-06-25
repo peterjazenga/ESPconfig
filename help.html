@@ -1,10 +1,53 @@
 <!DOCTYPE html>
-<html>
+<html><head>
 <title>ESP protopage</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="stylesheet" href="w3.css">
-<body>
+</head><body>
     <div class="w3-container w3-blue">
         Help
       </div>
+This is the default help file, it should be replaced for your project with your own help file<br>
+
+<div>To use sysConfig is straighforward, you need to include sysconfig8266.h or sysconfig32.h for your ESP8266 or ESP32 projects respectively<br>
+in setup, add sysConfig.init(); and in loop add.sysConfig.run(); <br><br>
+To brand the device add your own logo.png file and favicon.ico, these images are expected and file names should be lower case<br>
+You must also edit index.html to change the title shown in the browser bar and add your own page links<br>
+about.html should also be replaced with your own file<br><br>
+To keep the interface consistent and predictable, your menu link needs to include target="frame" as part of the html link, this ensures your page is displayed within the frame, follow the pattern used in the index.html file<br><br>
+<a href="https://www.w3schools.com/charsets/ref_utf_symbols.asp" target="_blank">https://www.w3schools.com/charsets/ref_utf_symbols.asp</a> provides excellent reference to unicode characters<br>
+sysConfig uses unicode character encoding to provide icons for its menu structure, this is paricularly well suited to ESP and other embedded devices as it reduces the data storage and number of files required to achieve an attractive UI<br>
+<br>
+Memory constraints are particularly tight on the ESP8266 and creating files of more than 4k in code will result in frequent crashes, examine how the timers page is built and how it is rendered using javascript, also to avoid file size issues, use static html files wherever possible, use dynamic pages only for forms amd remdering variable data<br>
+tsysConfig contains a number of form processing elements to support form generation and data processing, these are type checked and where range values are provided, also range checked<br>
+Use is straightforward and it makes form creation very easy 
+</div><br>
+<div>
+  <details>
+    <summary>Example of form elements use from the acl.html page of sysConfig</summary>
+    <p>void tSysConfig::ACL(){<br>
+      // provide the basic page structure<br>
+   HTML=F("&lt!DOCTYPE html&gt&lthtml&gt&lthead&gt&ltmeta charset=\"UTF-8\"&gt&lttitle&gtESP Timers Page&lt/title&gt&ltmeta name=\"viewport\" content=\"width=device-width, initial-scale=1\"&gt");<br>
+   HTML+=F("&ltlink rel=\"stylesheet\" type=\"text/css\" href=\"w3.css\"&gt&ltscript src=\"sc.js\"&gt&lt/script&gt&lt/head&gt&ltbody onload=\"rewrite()\"&gt&ltdiv class=\"w3-container w3-blue\"&gt");<br>
+   HTML+=F("Access control&lt/div&gt");<br>
+   webobj.name="ACL"; // name the form<br>
+   form(webobj);// create the form object<br>
+   webobj.name="fname"; .. name the first field<br>
+   webobj.label="&#128100"; // provide a label, in this case we use a Unicode icon character<br>
+   webobj.placeholder="Username Name"; // placeholders are displayed in empty edit fields<br>
+   edit(webobj,_data.userName,32); // create the edit field and attach it to the variable, in this case a char array so we must also provide the size<br>
+   webobj.name="lname";<br>
+   webobj.label="&#128272";<br>
+   webobj.placeholder="Password";<br>
+   password(webobj,_data.userPass,32);<br>
+   // complete the form, this includes the save button for us<br>
+   form();<br>
+     if ( server.method() == HTTP_POST ){ your_routine();<br>}
+   HTML+=F("&lt/body&gt&lt/html&gt");<br> 
+   server.send(200, "text/html", HTML);<br>HTML="";<br> webobj.name="";<br>s webobj.css="";<br>webobj.label="";<br> webobj.placeholder="";<br></p>
+  </details>
+
+</div>
+
+</body></html>
      
