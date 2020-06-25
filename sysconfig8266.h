@@ -140,7 +140,7 @@ enum eSensorClass {s_undefined, s_NTC, s_BMP, s_BME, s_ADC, s_Freq, s_PWM, s_Wei
 
 typedef std::function<void(time_t trigger)> TTimerFunction;
  
-class tSysConfig : ESP8266WebServer {
+class tSysConfig{
  private:
   dataframe _data; // the data is contained in the private section as its not meant to be directly interatecd with by the main program
   dataframe _formdata; // the data contained herein is used to process the form data
@@ -355,6 +355,9 @@ void tSysConfig::initNTP() {
 
 void tSysConfig::initWebserver() {
  server.on("/", [&]{ indexPage(); });
+ server.on("/index", [&]{ indexPage(); });
+ server.on("/index.htm", [&]{ indexPage(); });
+ server.on("/index.html", [&]{ indexPage(); });
  server.on("/charts.html", [&]{ getCharts();} );
  server.on("/graph", [&]{ drawGraph();} );
  server.on("/config.html", [&]{ Config(); });
@@ -1007,7 +1010,15 @@ void tSysConfig::getHelp(){
  dataFile.close(); 
 }
 void tSysConfig::handleNotFound(){
- 
+  // the 404 page, we want to show the message and give the user a link back to the index page
+  // unlike the other pages, this one is entirely self contained, including the CSS it needs
+  // one caveat, figure out if its framed or unframed from the uri
+ File dataFile = SPIFFS.open("/404.html", "r"); 
+ if (dataFile.size()<=0) {Serial.println(F("help.htm bad file size"));
+ }
+ if (server.streamFile(dataFile, "text/html") != dataFile.size()) {Serial.println(F("404.html streaming error"));
+ }
+ dataFile.close();  
 }
 bool tSysConfig::webAuth(){
  // used by restricted Configuration pages
