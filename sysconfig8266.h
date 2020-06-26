@@ -139,12 +139,14 @@ enum s_class {s_none, s_byte, s_int32_t, s_float, s_text};// used by the select 
 enum eSensorClass {s_undefined, s_NTC, s_BMP, s_BME, s_ADC, s_Freq, s_PWM, s_Weight};
 
 typedef std::function<void(time_t trigger)> TTimerFunction;
- 
+String HTML;
+char buffer[256];
+dataframe _data; // the data is contained in the private section as its not meant to be directly interatecd with by the main program
+//dataframe _formdata; // the data contained herein is used to process the form data
+  
 class tSysConfig{
  private:
-  dataframe _data; // the data is contained in the private section as its not meant to be directly interatecd with by the main program
-  dataframe _formdata; // the data contained herein is used to process the form data
- // LED information for heartbeat LED
+   // LED information for heartbeat LED
   long lastBlinkMillis;
   int32_t blinkstate=0;// defines which blink is used, 0-3 are slow 4-7 are fast blink
   int32_t LEDstate=0;//inidicates which bit of the pattern is in use
@@ -167,8 +169,8 @@ class tSysConfig{
   FlashMode_t ideMode;
   int32_t error; // used singularly during form processing, each new element resets this
   int32_t errorcount;
-  String HTML; // used to build the web page
-  char buffer[256];
+ // String HTML; // used to build the web page
+ // char buffer[256];
   bool inForm;
   bool inFieldset;
   s_class inSelect; // if we are in a select group we need to know the class so it processes the correct information
@@ -311,6 +313,12 @@ void tSysConfig::init() {
  ideSize = ESP.getFlashChipSize();
  ideMode = ESP.getFlashChipMode();
  Serial.printf(" ESP8266 Chip id = %08X\n\r", ESP.getChipId());
+ Serial.printf("\n\nSdk version: %s\n", ESP.getSdkVersion());
+ Serial.printf("Core Version: %s\n", ESP.getCoreVersion().c_str());
+ Serial.printf("Boot Version: %u\n", ESP.getBootVersion());
+ Serial.printf("Boot Mode: %u\n", ESP.getBootMode());
+ Serial.printf("CPU Frequency: %u MHz\n", ESP.getCpuFreqMHz());
+ Serial.printf("Reset reason: %s\n", ESP.getResetReason().c_str());
  Serial.printf("Flash real id: %08X\n\r", ESP.getFlashChipId());
  Serial.printf("Flash real size: %u bytes\n\r", realSize);
  Serial.printf("Flash ide size: %u bytes\n\r", ideSize);
@@ -906,6 +914,20 @@ void tSysConfig::Sysinfo(){
  HTML+=F("Sysinfo</div><table class=\"w3-table w3-striped w3-border\"><tr><th>Parameter</th><th>Value</th></tr>");
  sprintf(buffer," <tr><td>ESP 8266 Chip id</td><td>%08X</td></tr>",ESP.getChipId());
  HTML+=buffer;
+ 
+ sprintf(buffer," <tr><td>SDK version</td><td>%s</td></tr>",ESP.getSdkVersion());
+ HTML+=buffer;
+ sprintf(buffer," <tr><td>Core version</td><td>%s</td></tr>",ESP.getCoreVersion().c_str());
+ HTML+=buffer;
+ sprintf(buffer," <tr><td>Boot version</td><td>%u</td></tr>", ESP.getBootVersion());
+ HTML+=buffer;
+ sprintf(buffer," <tr><td>Boot mode</td><td>%u</td></tr>", ESP.getBootMode());
+ HTML+=buffer;
+ sprintf(buffer," <tr><td>CPU frequency</td><td>%u MHz</td></tr>", ESP.getCpuFreqMHz());
+ HTML+=buffer;
+ sprintf(buffer," <tr><td>Reset Reason</td><td>%s</td></tr>", ESP.getResetReason().c_str());
+ HTML+=buffer;
+
  sprintf(buffer," <tr><td>Flash id</td><td>%08X</td></tr>",ESP.getFlashChipId());
  HTML+=buffer;
  sprintf(buffer," <tr><td>Flash real size</td><td>%u</td></tr>",realSize);
