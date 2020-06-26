@@ -1173,8 +1173,8 @@ void tSysConfig::indexPage(void) {
 }
 void tSysConfig::Config(){ 
  HTML=F("<!DOCTYPE html><html><head><meta charset=\"UTF-8\"><title>ESP Config Page</title><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">");
- HTML+=F("<link rel=\"stylesheet\" type=\"text/css\" href=\"w3.css\">");
- HTML+=F("<script type=\"text/javascript\" src=\"sc.js\"></script>");
+ HTML+=F("<link rel=\"stylesheet\" type=\"text/css\" href=\"/w3.css\">");
+ HTML+=F("<script type=\"text/javascript\" src=\"/sc.js\"></script>");
  HTML+=F("</head><body onload=\"rewrite()\"><div class=\"w3-container w3-blue\">");
  HTML+=F("WiFi configuration <button onclick=\"openTab('A')\">WiFi connection</button>");
  HTML+=F("<button onclick=\"openTab('B')\">AP</button>");
@@ -1275,8 +1275,8 @@ void tSysConfig::Config(){
 }
 void tSysConfig::Time(){ 
  HTML=F("<!DOCTYPE html><html><head><meta charset=\"UTF-8\"><title>ESP Config Page</title><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">");
- HTML+=F("<link rel=\"stylesheet\" type=\"text/css\" href=\"w3.css\">");
- HTML+=F("<script type=\"text/javascript\" src=\"sc.js\"></script>");
+ HTML+=F("<link rel=\"stylesheet\" type=\"text/css\" href=\"/w3.css\">");
+ HTML+=F("<script type=\"text/javascript\" src=\"/sc.js\"></script>");
  HTML+=F("</head><body onload=\"rewrite()\"><div class=\"w3-container w3-blue\">");
  HTML+=F("Time settings</div>");
  
@@ -1309,8 +1309,8 @@ void tSysConfig::Time(){
 }
 void tSysConfig::OTA(){ 
  HTML=F("<!DOCTYPE html><html><head><meta charset=\"UTF-8\"><title>ESP Config Page</title><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">");
- HTML+=F("<link rel=\"stylesheet\" type=\"text/css\" href=\"w3.css\">");
- HTML+=F("<script type=\"text/javascript\" src=\"sc.js\"></script>");
+ HTML+=F("<link rel=\"stylesheet\" type=\"text/css\" href=\"/w3.css\">");
+ HTML+=F("<script type=\"text/javascript\" src=\"/sc.js\"></script>");
  HTML+=F("</head><body onload=\"rewrite()\"><div class=\"w3-container w3-blue\">");
  HTML+=F("Bios Updates</div>");
  
@@ -1346,7 +1346,7 @@ void tSysConfig::OTA(){
 }
 void tSysConfig::Sensors(){
  HTML=F("<!DOCTYPE html><html><head><meta charset=\"UTF-8\"><title>ESP Sensor Page</title><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">");
- HTML+=F("<link rel=\"stylesheet\" type=\"text/css\" href=\"w3.css\"><script src=\"sc.js\"></script></head><body onload=\"rewrite()\"><div class=\"w3-container w3-blue\">");
+ HTML+=F("<link rel=\"stylesheet\" type=\"text/css\" href=\"/w3.css\"><script src=\"/sc.js\"></script></head><body onload=\"rewrite()\"><div class=\"w3-container w3-blue\">");
  HTML+=F("Sensor configuration</div>");
  webobj.name="sensors";
  form(webobj);
@@ -1359,7 +1359,7 @@ HTML+=F("</body></html>");
 }
 void tSysConfig::Timers(){ 
  HTML=F("<!DOCTYPE html><html><head><meta charset=\"UTF-8\"><title>ESP Timers Page</title><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">");
- HTML+=F("<link rel=\"stylesheet\" type=\"text/css\" href=\"w3.css\"><script src=\"sc.js\"></script></head><body onload=\"rewrite()\"><div class=\"w3-container w3-blue\">Timers</div>");
+ HTML+=F("<link rel=\"stylesheet\" type=\"text/css\" href=\"/w3.css\"><script src=\"/sc.js\"></script></head><body onload=\"rewrite()\"><div class=\"w3-container w3-blue\">Timers</div>");
  webobj.name="timers";
  form(webobj); 
  HTML+=F("<table id = \"tt\"></table><script>var time, i, id, x = \"\";\r\n var time ='{\"alarms\":[");
@@ -1413,7 +1413,7 @@ void tSysConfig::Timers(){
 
 void tSysConfig::ACL(){ 
  HTML=F("<!DOCTYPE html><html><head><meta charset=\"UTF-8\"><title>ESP Timers Page</title><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">");
- HTML+=F("<link rel=\"stylesheet\" type=\"text/css\" href=\"w3.css\"><script src=\"sc.js\"></script></head><body onload=\"rewrite()\"><div class=\"w3-container w3-blue\">");
+ HTML+=F("<link rel=\"stylesheet\" type=\"text/css\" href=\"/w3.css\"><script src=\"/sc.js\"></script></head><body onload=\"rewrite()\"><div class=\"w3-container w3-blue\">");
  HTML+=F("Access control</div>");
  webobj.name="ACL";
  form(webobj);
@@ -1438,7 +1438,7 @@ void tSysConfig::ACL(){
 }
 void tSysConfig::Register(){ 
  HTML=F("<!DOCTYPE html><html><head><meta charset=\"UTF-8\"><title>ESP Timers Page</title><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">");
- HTML+=F("<link rel=\"stylesheet\" type=\"text/css\" href=\"w3.css\"><script src=\"sc.js\"></script></head><body onload=\"rewrite()\"><div class=\"w3-container w3-blue\">");
+ HTML+=F("<link rel=\"stylesheet\" type=\"text/css\" href=\"/w3.css\"><script src=\"/sc.js\"></script></head><body onload=\"rewrite()\"><div class=\"w3-container w3-blue\">");
  HTML+=F("Device registration</div>");
  webobj.name="register";
  form(webobj);
@@ -1469,7 +1469,7 @@ HTML+=F("</body></html>");
 }
 void tSysConfig::MQTT(){ 
  HTML=F("<!DOCTYPE html><html><head><meta charset=\"UTF-8\"><title>ESP Timers Page</title><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">");
- HTML+=F("<link rel=\"stylesheet\" type=\"text/css\" href=\"w3.css\"><script src=\"sc.js\"></script></head><body onload=\"rewrite()\"><div class=\"w3-container w3-blue\">");
+ HTML+=F("<link rel=\"stylesheet\" type=\"text/css\" href=\"/w3.css\"><script src=\"/sc.js\"></script></head><body onload=\"rewrite()\"><div class=\"w3-container w3-blue\">");
  HTML+=F("MQTT configuration</div>");
  webobj.name="MQTT";
  form(webobj);
@@ -1481,7 +1481,7 @@ void tSysConfig::MQTT(){
 
 void tSysConfig::Sysinfo(){ 
  HTML=F("<!DOCTYPE html><html><head><meta charset=\"UTF-8\"><title>ESP Timers Page</title><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">");
- HTML+=F("<link rel=\"stylesheet\" type=\"text/css\" href=\"w3.css\"><script src=\"sc.js\"></script></head><body onload=\"rewrite()\"><div class=\"w3-container w3-blue\">");
+ HTML+=F("<link rel=\"stylesheet\" type=\"text/css\" href=\"/w3.css\"><script src=\"/sc.js\"></script></head><body onload=\"rewrite()\"><div class=\"w3-container w3-blue\">");
  HTML+=F("Sysinfo</div><table class=\"w3-table w3-striped w3-border\"><tr><th>Parameter</th><th>Value</th></tr>");
  sprintf(buffer," <tr><td>ESP32 Revision</td><td>%d</td></tr>",ESP.getChipRevision());
  HTML+=buffer;
@@ -1544,7 +1544,7 @@ void tSysConfig::getLogo(){
 }
 void tSysConfig::getCSS(){
  File dataFile = SPIFFS.open("/w3.css", "r"); 
- if (dataFile.size()<=0) {Serial.println("w3.css bad file size");
+ if (dataFile.size()<=0) {Serial.println("/w3.css bad file size");
  }
  if (server.streamFile(dataFile, "text/css") != dataFile.size()) {Serial.println(F("CSS streaming error"));
  }
@@ -1552,7 +1552,7 @@ void tSysConfig::getCSS(){
 }
 void tSysConfig::getJS(){
  File dataFile = SPIFFS.open("/w3.js", "r");
- if (dataFile.size()<=0) {Serial.println(F("sc.js bad file size"));
+ if (dataFile.size()<=0) {Serial.println(F("w3.js bad file size"));
  }
  if (server.streamFile(dataFile, "text/javascript") != dataFile.size()) {Serial.println(F("JS streaming error"));
  }
@@ -1560,15 +1560,15 @@ void tSysConfig::getJS(){
 }
 void tSysConfig::getSCjs(){
  File dataFile = SPIFFS.open("/sc.js", "r"); 
- if (dataFile.size()<=0) {Serial.println(F("sc.js bad file size"));
+ if (dataFile.size()<=0) {Serial.println(F("/sc.js bad file size"));
  }
- if (server.streamFile(dataFile, "text/javascript") != dataFile.size()) {Serial.println(F("sc.js streaming error"));
+ if (server.streamFile(dataFile, "text/javascript") != dataFile.size()) {Serial.println(F("/sc.js streaming error"));
  }
  dataFile.close(); 
 }
 void tSysConfig::getCharts(){
  HTML=F("<!DOCTYPE html><html><head><meta charset=\"UTF-8\"><title>ESP Timers Page</title><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">");
- HTML+=F("<link rel=\"stylesheet\" type=\"text/css\" href=\"w3.css\"><script src=\"sc.js\"></script></head><body onload=\"rewrite()\"><div class=\"w3-container w3-blue\">");
+ HTML+=F("<link rel=\"stylesheet\" type=\"text/css\" href=\"/w3.css\"><script src=\"/sc.js\"></script></head><body onload=\"rewrite()\"><div class=\"w3-container w3-blue\">");
  HTML+=F("Charts</div>");
 
  HTML+=F("</body></html>"); 
