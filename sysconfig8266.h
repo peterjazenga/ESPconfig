@@ -194,7 +194,7 @@ class tSysConfig{
 // if desired, the device name can be changed prior to calling init
  htmlproperties webobj;
  ESP8266WebServer server;
- ESP8266WiFiMulti WiFiMulti;
+ ESP8266WiFiMulti multiWiFi;
  WiFiUDP udp; 
  /* this is meant to engage an automated Configuration mode that connects to a predefined WiFi and then calls some functions to get the logo, CSS, about, help and initConfig files 
  * firstrun passes the device Mac number to the called program, this then sets a unique login ID for the device Configuration file 
@@ -465,13 +465,13 @@ void tSysConfig::initWiFi(){
  // scan for available networks
  scanWiFi();
  for ( byte i = 0; i < 5; i++ ) {
- WiFiMulti.addAP(_data.AccessPoints[i].WiFiname, _data.AccessPoints[i].WiFipassword);
+ multiWiFi.addAP(_data.AccessPoints[i].WiFiname, _data.AccessPoints[i].WiFipassword);
  }
  WiFi.beginSmartConfig();
 
  // WiFi.begin(_data.AccessPoints[0].WiFiname, _data.AccessPoints[0].WiFipassword); 
  // wait for connection here
- while ((WiFiMulti.run() != WL_CONNECTED) && (retries<30)) {
+ while ((multiWiFi.run() != WL_CONNECTED) && (retries<30)) {
  delay(500);
  Serial.print(".");
  ++retries;
