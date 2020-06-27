@@ -349,6 +349,7 @@ bool tSysConfig::readConfig(){
 size_t size = ConfigFile.size();
  if (size != sizeof(_data)) {
  Serial.println("Config file size is invalid");
+ ConfigFile.close();
  return false;
  }
  ConfigFile.read((byte*) &_data, sizeof(_data));
@@ -430,6 +431,8 @@ void tSysConfig::initConfig() {
  strlcpy(_data.NTPserverValue,"north-america.pool.ntp.org",32);
  strlcpy(_data.BLEname,"TRL_Device",32);
  strlcpy(_data.BLEpassword,"1111",32);
+ strlcpy(_data.userName,"admin",32);
+ strlcpy(_data.userPass,"admin",32);
  _data.ConfigPage=1;// always available
  _data.BLEConfig=1; // always on
  _data.APconfig=1; // softap is always available
@@ -525,14 +528,37 @@ void tSysConfig::initWebserver() {
  server.on("/index.html", [&]{ indexPage(); });
  server.on("/charts.html", [&]{ getCharts();} );
  server.on("/graph", [&]{ drawGraph();} );
- server.on("/config.html", [&]{ Config(); });
- server.on("/sensor.html", [&]{ Sensors(); });
- server.on("/timer.html", [&]{ Timers(); });
- server.on("/time.html", [&]{ Time(); });
- server.on("/update.html", [&]{ OTA(); });
- server.on("/acl.html", [&]{ ACL(); });
- server.on("/register.html", [&]{ Register(); });
- server.on("/mqtt.html", [&]{ MQTT(); });
+ server.on("/config.html", [&]{ if (!server.authenticate(_data.userName, _data.userPass)) {
+      return server.requestAuthentication();
+    }
+    Config(); });
+ server.on("/sensor.html", [&]{ if (!server.authenticate(_data.userName, _data.userPass)) {
+      return server.requestAuthentication();
+    }
+    Sensors(); });
+ server.on("/timer.html", [&]{ if (!server.authenticate(_data.userName, _data.userPass)) {
+      return server.requestAuthentication();
+    }
+    Timers(); });
+ server.on("/time.html", [&]{ if (!server.authenticate(_data.userName, _data.userPass)) {
+      return server.requestAuthentication();
+    }
+    Time(); });
+ server.on("/update.html", [&]{if (!server.authenticate(_data.userName, _data.userPass)) {
+      return server.requestAuthentication();
+    }
+    OTA(); });
+ server.on("/acl.html", [&]{if (!server.authenticate(_data.userName, _data.userPass)) {
+      return server.requestAuthentication();
+    } 
+    ACL(); });
+ server.on("/register.html", [&]{ if (!server.authenticate(_data.userName, _data.userPass)) {
+      return server.requestAuthentication();
+    }
+    Register(); });
+ server.on("/mqtt.html", [&]{ if (!server.authenticate(_data.userName, _data.userPass)) {
+      return server.requestAuthentication();
+    }MQTT(); });
  server.on("/sysinfo.html", [&]{ Sysinfo(); });
  server.on("/help.html", [&]{ getHelp(); });
  server.on("/about.html", [&]{ getAbout(); });
@@ -1173,8 +1199,8 @@ void tSysConfig::indexPage(void) {
 }
 void tSysConfig::Config(){ 
  HTML=F("<!DOCTYPE html><html><head><meta charset=\"UTF-8\"><title>ESP Config Page</title><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">");
- HTML+=F("<link rel=\"stylesheet\" type=\"text/css\" href=\"/w3.css\">");
- HTML+=F("<script type=\"text/javascript\" src=\"/sc.js\"></script>");
+ HTML+=F("<link rel=\"stylesheet\" type=\"text/css\" href=\"w3.css\">");
+ HTML+=F("<script type=\"text/javascript\" src=\"sc.js\"></script>");
  HTML+=F("</head><body onload=\"rewrite()\"><div class=\"w3-container w3-blue\">");
  HTML+=F("WiFi configuration <button onclick=\"openTab('A')\">WiFi connection</button>");
  HTML+=F("<button onclick=\"openTab('B')\">AP</button>");
@@ -1275,8 +1301,8 @@ void tSysConfig::Config(){
 }
 void tSysConfig::Time(){ 
  HTML=F("<!DOCTYPE html><html><head><meta charset=\"UTF-8\"><title>ESP Config Page</title><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">");
- HTML+=F("<link rel=\"stylesheet\" type=\"text/css\" href=\"/w3.css\">");
- HTML+=F("<script type=\"text/javascript\" src=\"/sc.js\"></script>");
+ HTML+=F("<link rel=\"stylesheet\" type=\"text/css\" href=\"w3.css\">");
+ HTML+=F("<script type=\"text/javascript\" src=\"sc.js\"></script>");
  HTML+=F("</head><body onload=\"rewrite()\"><div class=\"w3-container w3-blue\">");
  HTML+=F("Time settings</div>");
  
@@ -1309,8 +1335,8 @@ void tSysConfig::Time(){
 }
 void tSysConfig::OTA(){ 
  HTML=F("<!DOCTYPE html><html><head><meta charset=\"UTF-8\"><title>ESP Config Page</title><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">");
- HTML+=F("<link rel=\"stylesheet\" type=\"text/css\" href=\"/w3.css\">");
- HTML+=F("<script type=\"text/javascript\" src=\"/sc.js\"></script>");
+ HTML+=F("<link rel=\"stylesheet\" type=\"text/css\" href=\"w3.css\">");
+ HTML+=F("<script type=\"text/javascript\" src=\"sc.js\"></script>");
  HTML+=F("</head><body onload=\"rewrite()\"><div class=\"w3-container w3-blue\">");
  HTML+=F("Bios Updates</div>");
  
@@ -1346,7 +1372,7 @@ void tSysConfig::OTA(){
 }
 void tSysConfig::Sensors(){
  HTML=F("<!DOCTYPE html><html><head><meta charset=\"UTF-8\"><title>ESP Sensor Page</title><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">");
- HTML+=F("<link rel=\"stylesheet\" type=\"text/css\" href=\"/w3.css\"><script src=\"/sc.js\"></script></head><body onload=\"rewrite()\"><div class=\"w3-container w3-blue\">");
+ HTML+=F("<link rel=\"stylesheet\" type=\"text/css\" href=\"w3.css\"><script src=\"sc.js\"></script></head><body onload=\"rewrite()\"><div class=\"w3-container w3-blue\">");
  HTML+=F("Sensor configuration</div>");
  webobj.name="sensors";
  form(webobj);
@@ -1359,7 +1385,7 @@ HTML+=F("</body></html>");
 }
 void tSysConfig::Timers(){ 
  HTML=F("<!DOCTYPE html><html><head><meta charset=\"UTF-8\"><title>ESP Timers Page</title><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">");
- HTML+=F("<link rel=\"stylesheet\" type=\"text/css\" href=\"/w3.css\"><script src=\"/sc.js\"></script></head><body onload=\"rewrite()\"><div class=\"w3-container w3-blue\">Timers</div>");
+ HTML+=F("<link rel=\"stylesheet\" type=\"text/css\" href=\"w3.css\"><script src=\"sc.js\"></script></head><body onload=\"rewrite()\"><div class=\"w3-container w3-blue\">Timers</div>");
  webobj.name="timers";
  form(webobj); 
  HTML+=F("<table id = \"tt\"></table><script>var time, i, id, x = \"\";\r\n var time ='{\"alarms\":[");
@@ -1413,7 +1439,7 @@ void tSysConfig::Timers(){
 
 void tSysConfig::ACL(){ 
  HTML=F("<!DOCTYPE html><html><head><meta charset=\"UTF-8\"><title>ESP Timers Page</title><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">");
- HTML+=F("<link rel=\"stylesheet\" type=\"text/css\" href=\"/w3.css\"><script src=\"/sc.js\"></script></head><body onload=\"rewrite()\"><div class=\"w3-container w3-blue\">");
+ HTML+=F("<link rel=\"stylesheet\" type=\"text/css\" href=\"w3.css\"><script src=\"sc.js\"></script></head><body onload=\"rewrite()\"><div class=\"w3-container w3-blue\">");
  HTML+=F("Access control</div>");
  webobj.name="ACL";
  form(webobj);
@@ -1438,7 +1464,7 @@ void tSysConfig::ACL(){
 }
 void tSysConfig::Register(){ 
  HTML=F("<!DOCTYPE html><html><head><meta charset=\"UTF-8\"><title>ESP Timers Page</title><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">");
- HTML+=F("<link rel=\"stylesheet\" type=\"text/css\" href=\"/w3.css\"><script src=\"/sc.js\"></script></head><body onload=\"rewrite()\"><div class=\"w3-container w3-blue\">");
+ HTML+=F("<link rel=\"stylesheet\" type=\"text/css\" href=\"w3.css\"><script src=\"sc.js\"></script></head><body onload=\"rewrite()\"><div class=\"w3-container w3-blue\">");
  HTML+=F("Device registration</div>");
  webobj.name="register";
  form(webobj);
@@ -1469,7 +1495,7 @@ HTML+=F("</body></html>");
 }
 void tSysConfig::MQTT(){ 
  HTML=F("<!DOCTYPE html><html><head><meta charset=\"UTF-8\"><title>ESP Timers Page</title><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">");
- HTML+=F("<link rel=\"stylesheet\" type=\"text/css\" href=\"/w3.css\"><script src=\"/sc.js\"></script></head><body onload=\"rewrite()\"><div class=\"w3-container w3-blue\">");
+ HTML+=F("<link rel=\"stylesheet\" type=\"text/css\" href=\"w3.css\"><script src=\"sc.js\"></script></head><body onload=\"rewrite()\"><div class=\"w3-container w3-blue\">");
  HTML+=F("MQTT configuration</div>");
  webobj.name="MQTT";
  form(webobj);
@@ -1481,7 +1507,7 @@ void tSysConfig::MQTT(){
 
 void tSysConfig::Sysinfo(){ 
  HTML=F("<!DOCTYPE html><html><head><meta charset=\"UTF-8\"><title>ESP Timers Page</title><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">");
- HTML+=F("<link rel=\"stylesheet\" type=\"text/css\" href=\"/w3.css\"><script src=\"/sc.js\"></script></head><body onload=\"rewrite()\"><div class=\"w3-container w3-blue\">");
+ HTML+=F("<link rel=\"stylesheet\" type=\"text/css\" href=\"w3.css\"><script src=\"sc.js\"></script></head><body onload=\"rewrite()\"><div class=\"w3-container w3-blue\">");
  HTML+=F("Sysinfo</div><table class=\"w3-table w3-striped w3-border\"><tr><th>Parameter</th><th>Value</th></tr>");
  sprintf(buffer," <tr><td>ESP32 Revision</td><td>%d</td></tr>",ESP.getChipRevision());
  HTML+=buffer;
@@ -1544,7 +1570,7 @@ void tSysConfig::getLogo(){
 }
 void tSysConfig::getCSS(){
  File dataFile = SPIFFS.open("/w3.css", "r"); 
- if (dataFile.size()<=0) {Serial.println("/w3.css bad file size");
+ if (dataFile.size()<=0) {Serial.println("w3.css bad file size");
  }
  if (server.streamFile(dataFile, "text/css") != dataFile.size()) {Serial.println(F("CSS streaming error"));
  }
@@ -1554,26 +1580,25 @@ void tSysConfig::getJS(){
  File dataFile = SPIFFS.open("/w3.js", "r");
  if (dataFile.size()<=0) {Serial.println(F("w3.js bad file size"));
  }
- if (server.streamFile(dataFile, "text/javascript") != dataFile.size()) {Serial.println(F("JS streaming error"));
+ if (server.streamFile(dataFile, "text/javascript") != dataFile.size()) {Serial.println(F("w3.js streaming error"));
  }
  dataFile.close(); 
 }
 void tSysConfig::getSCjs(){
- File dataFile = SPIFFS.open("/sc.js", "r"); 
- if (dataFile.size()<=0) {Serial.println(F("/sc.js bad file size"));
+ File dataFile = SPIFFS.open("/sc.js", "r");
+ if (dataFile.size()<=0) {Serial.println(F("sc.js bad file size"));
  }
- if (server.streamFile(dataFile, "text/javascript") != dataFile.size()) {Serial.println(F("/sc.js streaming error"));
+ if (server.streamFile(dataFile, "text/javascript") != dataFile.size()) {Serial.println(F("sc.js streaming error"));
  }
  dataFile.close(); 
 }
 void tSysConfig::getCharts(){
  HTML=F("<!DOCTYPE html><html><head><meta charset=\"UTF-8\"><title>ESP Timers Page</title><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">");
- HTML+=F("<link rel=\"stylesheet\" type=\"text/css\" href=\"/w3.css\"><script src=\"/sc.js\"></script></head><body onload=\"rewrite()\"><div class=\"w3-container w3-blue\">");
+ HTML+=F("<link rel=\"stylesheet\" type=\"text/css\" href=\"w3.css\"><script src=\"sc.js\"></script></head><body onload=\"rewrite()\"><div class=\"w3-container w3-blue\">");
  HTML+=F("Charts</div>");
 
  HTML+=F("</body></html>"); 
  server.send(200, "text/html", HTML);HTML=""; webobj.name="", webobj.css="";webobj.label=""; webobj.placeholder="";
- 
 }
 void tSysConfig::drawGraph(){ 
  
@@ -1605,8 +1630,6 @@ void tSysConfig::handleNotFound(){
  }
  dataFile.close();  
 }
-
-
 
 
 /* do authentication

@@ -148,7 +148,7 @@ class tSysConfig{
  private:
    // LED information for heartbeat LED
   long lastBlinkMillis;
-  int32_t blinkstate=0;// defines which blink is used, 0-3 are slow 4-7 are fast blink
+  int32_t blinkstate=2;// defines which blink is used, 0-3 are slow 4-7 are fast blink
   int32_t LEDstate=0;//inidicates which bit of the pattern is in use
  // WiFi connection information
   long currentMillis = 0;
@@ -333,9 +333,7 @@ void tSysConfig::init() {
  Serial.print(__DATE__);
  Serial.print(" @ ");
  Serial.println(__TIME__);
- 
- readConfig();
- initConfig();
+  initConfig();
  initWiFi();
  initWebserver();
  initNTP();
@@ -368,14 +366,38 @@ void tSysConfig::initWebserver() {
  server.on("/index.html", [&]{ indexPage(); });
  server.on("/charts.html", [&]{ getCharts();} );
  server.on("/graph", [&]{ drawGraph();} );
- server.on("/config.html", [&]{ Config(); });
- server.on("/sensor.html", [&]{ Sensors(); });
- server.on("/timer.html", [&]{ Timers(); });
- server.on("/time.html", [&]{ Time(); });
- server.on("/update.html", [&]{ OTA(); });
- server.on("/acl.html", [&]{ ACL(); });
- server.on("/register.html", [&]{ Register(); });
- server.on("/mqtt.html", [&]{ MQTT(); });
+ server.on("/config.html", [&]{  if (!server.authenticate(_data.userName, _data.userPass)) {
+      return server.requestAuthentication();
+    }
+   Config(); });
+ server.on("/sensor.html", [&]{ if (!server.authenticate(_data.userName, _data.userPass)) {
+      return server.requestAuthentication();
+    }
+ Sensors(); });
+ server.on("/timer.html", [&]{ if (!server.authenticate(_data.userName, _data.userPass)) {
+      return server.requestAuthentication();
+    }
+ Timers(); });
+ server.on("/time.html", [&]{ if (!server.authenticate(_data.userName, _data.userPass)) {
+      return server.requestAuthentication();
+    }
+ Time(); });
+ server.on("/update.html", [&]{ if (!server.authenticate(_data.userName, _data.userPass)) {
+      return server.requestAuthentication();
+    }
+ OTA(); });
+ server.on("/acl.html", [&]{ if (!server.authenticate(_data.userName, _data.userPass)) {
+      return server.requestAuthentication();
+    }
+ ACL(); });
+ server.on("/register.html", [&]{ if (!server.authenticate(_data.userName, _data.userPass)) {
+      return server.requestAuthentication();
+    }
+ Register(); });
+ server.on("/mqtt.html", [&]{ if (!server.authenticate(_data.userName, _data.userPass)) {
+      return server.requestAuthentication();
+    }
+ MQTT(); });
  server.on("/sysinfo.html", [&]{ Sysinfo(); });
  server.on("/help.html", [&]{ getHelp(); });
  server.on("/about.html", [&]{ getAbout(); });
@@ -433,6 +455,8 @@ void tSysConfig::initConfig() {
  strlcpy(_data.AccessPoints[0].WiFipassword,"FVLICEYE",32);
  strlcpy(_data.APname,"TRL_Device",32);
  strlcpy(_data.APpassword,"12345678",32);
+ strlcpy(_data.userName,"admin",32);
+ strlcpy(_data.userPass,"admin",32);
 // Set a static ip address for the Access point mode
 // This can be used to directly connect to it instead of having to have a local network
  _data.ip = ip;
@@ -563,6 +587,7 @@ if (blinkstate>3) {t=FAST_BLINK;}
   case 3:{digitalWrite(LED_BUILTIN,(bool) PT_SCANNING>>LEDstate ? true : false); break;}
  }
  lastBlinkMillis = currentMillis;
+ digitalWrite(LED_BUILTIN,digitalRead(LED_BUILTIN));// invert the state, its wrong on my board 
  }
 }
 void tSysConfig::OTAinit(){ 
@@ -950,7 +975,7 @@ void tSysConfig::Sysinfo(){
  HTML+=buffer;
  IPAddress IP = WiFi.localIP();
  IPAddress GW = WiFi.gatewayIP();
- char buf[50];
+ char buf[80];
  sprintf(buf, "%d.%d.%d.%d<br><a href=\"http://%d.%d.%d.%d\" target=\"_blank\">%d.%d.%d.%d</a>", IP[0],IP[1],IP[2],IP[3], GW[0],GW[1],GW[2],GW[3], GW[0],GW[1],GW[2],GW[3] );
  sprintf(buffer,"<tr><td>IP address<BR>Gateway</td><td>%s</td></tr>",buf);
  HTML+=buffer;
