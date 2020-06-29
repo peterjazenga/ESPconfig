@@ -75,7 +75,8 @@ byte BLEConfig;
 byte APconfig; 
 byte sensorConfig;
 byte timerConfig;
-byte TZ; // defaults to GMT, handles time zone
+time_t TZ; // defaults to GMT, offset in seconds
+time_t DST; // daylight saving time
 char NTPserver[128];
 float setPoint; // also used as setPoint for PID loops
 float rangeValue;
@@ -250,11 +251,10 @@ class tSysConfig{
  bool editurl(htmlproperties obj, char* data, int32_t size);
  bool editemail(htmlproperties obj, char* data, int32_t size);
  bool edittel(htmlproperties obj, char* data, int32_t size);
- bool editTime(htmlproperties obj, time_t &data);
+ bool edit(htmlproperties obj, time_t &data);
  bool edit(htmlproperties obj, byte &data, byte min=0, byte max=0);
  bool edit(htmlproperties obj, int32_t &data, int32_t min=0, int32_t max=0);
  bool edit(htmlproperties obj, float &data, float min=0.0, float max=0.0);
- bool edit(htmlproperties obj, time_t &data, time_t min=0, time_t max=0);
  // unlike other fields, password auto includes Label & verify dialog
  bool password(htmlproperties obj, char* data, int32_t size, int32_t min=0, int32_t max=0);
  bool text(htmlproperties obj, char* data, int32_t size, int32_t min=0, int32_t max=0);
@@ -277,7 +277,6 @@ class tSysConfig{
  bool checkbox(htmlproperties obj, char* data, int32_t size);
  bool radio(htmlproperties obj, int32_t &data);
  bool radio(htmlproperties obj, char* data, int32_t size);
- bool editrange(htmlproperties obj, int32_t &data, int32_t min=0, int32_t max=0);
  // additional html elements of significant use to us
  // https://www.w3schools.com/tags/tag_meter.asp
  void meter(htmlproperties obj, int32_t value, int32_t min=0, int32_t max=0);
@@ -438,7 +437,8 @@ void tSysConfig::initConfig() {
  _data.APconfig=1; // softap is always available
  _data.sensorConfig=2; // heating
  _data.timerConfig=2; //defaults to timer only mode
- _data.TZ=0; // defaults to GMT
+ //_data.TZ=0; // defaults to GMT
+ //_data.DST=0;
  _data.setPoint=0; // also used as setPoint for PID loops
  _data.rangeValue=0;
  _data.iceGuard=0; //used by heating and cooling to prevent icing, must be >0 to be active
@@ -518,7 +518,7 @@ if (WiFi.status() != WL_CONNECTED){
 }
 
 void tSysConfig::initNTP() {
- 
+  configTime(_data.TZ, _data.DST, _data.NTPserver);
 }
 
 void tSysConfig::initWebserver() {
@@ -1004,17 +1004,16 @@ bool tSysConfig::edittel(htmlproperties obj, char* data, int32_t size){
  sprintf(buffer,"<input type=\"tel\" name=\"%s\" label=\"%s\" value=\"%s\" placeholder=\"%s\" %s>",obj.name.c_str(),obj.label.c_str(),data,obj.placeholder.c_str(), (obj.required)?" REQUIRED ":"");
  HTML+=buffer;
 }
-bool tSysConfig::editTime(htmlproperties obj, time_t &data){
+bool tSysConfig::edit(htmlproperties obj, time_t &data){
  if ( server.method() == HTTP_POST ){
   // POST functionality here, includes error handling
    error=copyval(data,obj.name.c_str());
- }/*
- tmElements_t atime; 
- breakTime(data, atime); 
+ }
+
  //atime.Hour=13;
  //atime.Minute=14;
- sprintf(buffer,"<input type=\"time\" name=\"%s\" label=\"%s\" Value=\"%02d:%02d\" %s>",obj.name.c_str(),obj.label.c_str(),atime.Hour,atime.Minute,(obj.required)?" REQUIRED ":"");
- HTML+=buffer;*/
+ sprintf(buffer,"<input type=\"time\" name=\"%s\" label=\"%s\" Value=\"%02d:%02d\" %s>",obj.name.c_str(),obj.label.c_str(),0,0,(obj.required)?" REQUIRED ":"");
+ HTML+=buffer;
 }
 /*  our select methods require some Javascript magic, the <select> element does not normally carry the value but this is carried here to 
  *  enable our Javascript code to pick it up and set the selected parameter on the correct option value
@@ -1176,18 +1175,6 @@ void tSysConfig::details(htmlproperties obj){
  sprintf(buffer,"<details><summary>%s</summary><p>%s</p></details>", obj.label.c_str(), obj.value.c_str() );
  HTML+=buffer; 
  }
-bool tSysConfig::editrange(htmlproperties obj, int32_t &data, int32_t min, int32_t max){
- if ( server.method() == HTTP_POST ){
-  // POST functionality here, includes error handling
-   error=copyval(data,obj.name.c_str(), min, max);
- }
-  if (min!=max){
-  sprintf(buffer,"<input type=\"range\" nam\"%s\" value=\"%d\" min=\"%d\" max=\"%d\">", obj.name.c_str(), data, min, max );} else {
-  sprintf(buffer,"<input type=\"range\" nam\"%s\" value=\"%d\">", obj.name.c_str(), data); 
- }
- HTML+=buffer; 
-}
-
 
 void tSysConfig::indexPage(void) {
   File dataFile = SPIFFS.open("/index.html", "r"); 
@@ -1196,9 +1183,11 @@ void tSysConfig::indexPage(void) {
  if (server.streamFile(dataFile, "text/html") != dataFile.size()) {Serial.println(F("index.html streaming error"));
  }
  dataFile.close(); 
+ server.client().stop();
 }
 void tSysConfig::Config(){ 
  HTML=F("<!DOCTYPE html><html><head><meta charset=\"UTF-8\"><title>ESP Config Page</title><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">");
+ HTML=F("<meta http-equiv=\"Cache-Control\" content=\"no-cache, no-store, must-revalidate\"><meta http-equiv=\"Pragma\" content=\"no-cache\"><meta http-equiv=\"Expires\" content=\"0\"><meta http-equi=\"Connection\" content=\"close\">");
  HTML+=F("<link rel=\"stylesheet\" type=\"text/css\" href=\"w3.css\">");
  HTML+=F("<script type=\"text/javascript\" src=\"sc.js\"></script>");
  HTML+=F("</head><body onload=\"rewrite()\"><div class=\"w3-container w3-blue\">");
@@ -1297,10 +1286,12 @@ void tSysConfig::Config(){
    if ( server.method() == HTTP_POST ){ writeConfig();}
  HTML+=F("</body></html>");
  server.send(200, "text/html", HTML);
+ server.client().stop();
  HTML=""; webobj.name="", webobj.css="";webobj.label=""; webobj.placeholder="";
 }
 void tSysConfig::Time(){ 
  HTML=F("<!DOCTYPE html><html><head><meta charset=\"UTF-8\"><title>ESP Config Page</title><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">");
+ HTML=F("<meta http-equiv=\"Cache-Control\" content=\"no-cache, no-store, must-revalidate\"><meta http-equiv=\"Pragma\" content=\"no-cache\"><meta http-equiv=\"Expires\" content=\"0\"><meta http-equi=\"Connection\" content=\"close\">");
  HTML+=F("<link rel=\"stylesheet\" type=\"text/css\" href=\"w3.css\">");
  HTML+=F("<script type=\"text/javascript\" src=\"sc.js\"></script>");
  HTML+=F("</head><body onload=\"rewrite()\"><div class=\"w3-container w3-blue\">");
@@ -1326,15 +1317,21 @@ void tSysConfig::Time(){
  webobj.label=F("GMT offset");
  webobj.placeholder=F("value in minutes");
  edit(webobj,_data.TZ);
+  webobj.name=F("DST");
+ webobj.label=F("DST offset");
+ webobj.placeholder=F("value in minutes");
+ edit(webobj,_data.DST);
 
  form();
    if ( server.method() == HTTP_POST ){ writeConfig();}
  HTML+=F("</body></html>");
  server.send(200, "text/html", HTML);
+ server.client().stop();
  HTML=""; webobj.name="", webobj.css="";webobj.label=""; webobj.placeholder="";
 }
 void tSysConfig::OTA(){ 
  HTML=F("<!DOCTYPE html><html><head><meta charset=\"UTF-8\"><title>ESP Config Page</title><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">");
+ HTML=F("<meta http-equiv=\"Cache-Control\" content=\"no-cache, no-store, must-revalidate\"><meta http-equiv=\"Pragma\" content=\"no-cache\"><meta http-equiv=\"Expires\" content=\"0\"><meta http-equi=\"Connection\" content=\"close\">");
  HTML+=F("<link rel=\"stylesheet\" type=\"text/css\" href=\"w3.css\">");
  HTML+=F("<script type=\"text/javascript\" src=\"sc.js\"></script>");
  HTML+=F("</head><body onload=\"rewrite()\"><div class=\"w3-container w3-blue\">");
@@ -1368,10 +1365,12 @@ void tSysConfig::OTA(){
    if ( server.method() == HTTP_POST ){ writeConfig();}
  HTML+=F("</body></html>");
  server.send(200, "text/html", HTML);
+ server.client().stop();
  HTML=""; webobj.name="", webobj.css="";webobj.label=""; webobj.placeholder="";
 }
 void tSysConfig::Sensors(){
  HTML=F("<!DOCTYPE html><html><head><meta charset=\"UTF-8\"><title>ESP Sensor Page</title><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">");
+ HTML=F("<meta http-equiv=\"Cache-Control\" content=\"no-cache, no-store, must-revalidate\"><meta http-equiv=\"Pragma\" content=\"no-cache\"><meta http-equiv=\"Expires\" content=\"0\"><meta http-equi=\"Connection\" content=\"close\">");
  HTML+=F("<link rel=\"stylesheet\" type=\"text/css\" href=\"w3.css\"><script src=\"sc.js\"></script></head><body onload=\"rewrite()\"><div class=\"w3-container w3-blue\">");
  HTML+=F("Sensor configuration</div>");
  webobj.name="sensors";
@@ -1381,10 +1380,12 @@ void tSysConfig::Sensors(){
     if ( server.method() == HTTP_POST ){ writeConfig();}
 HTML+=F("</body></html>");
  server.send(200, "text/html", HTML);
+ server.client().stop();
  HTML=""; webobj.name="", webobj.css="";webobj.label=""; webobj.placeholder="";
 }
 void tSysConfig::Timers(){ 
  HTML=F("<!DOCTYPE html><html><head><meta charset=\"UTF-8\"><title>ESP Timers Page</title><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">");
+ HTML=F("<meta http-equiv=\"Cache-Control\" content=\"no-cache, no-store, must-revalidate\"><meta http-equiv=\"Pragma\" content=\"no-cache\"><meta http-equiv=\"Expires\" content=\"0\"><meta http-equi=\"Connection\" content=\"close\">");
  HTML+=F("<link rel=\"stylesheet\" type=\"text/css\" href=\"w3.css\"><script src=\"sc.js\"></script></head><body onload=\"rewrite()\"><div class=\"w3-container w3-blue\">Timers</div>");
  webobj.name="timers";
  form(webobj); 
@@ -1434,11 +1435,13 @@ void tSysConfig::Timers(){
    if ( server.method() == HTTP_POST ){ writeConfig();}
  HTML+=F("</body></html>"); 
  server.send(200, "text/html", HTML);
- HTML=""; webobj.name="", webobj.css="";webobj.label=""; webobj.placeholder="";
+  server.client().stop();
+HTML=""; webobj.name="", webobj.css="";webobj.label=""; webobj.placeholder="";
 }
 
 void tSysConfig::ACL(){ 
  HTML=F("<!DOCTYPE html><html><head><meta charset=\"UTF-8\"><title>ESP Timers Page</title><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">");
+ HTML=F("<meta http-equiv=\"Cache-Control\" content=\"no-cache, no-store, must-revalidate\"><meta http-equiv=\"Pragma\" content=\"no-cache\"><meta http-equiv=\"Expires\" content=\"0\"><meta http-equi=\"Connection\" content=\"close\">");
  HTML+=F("<link rel=\"stylesheet\" type=\"text/css\" href=\"w3.css\"><script src=\"sc.js\"></script></head><body onload=\"rewrite()\"><div class=\"w3-container w3-blue\">");
  HTML+=F("Access control</div>");
  webobj.name="ACL";
@@ -1456,6 +1459,7 @@ void tSysConfig::ACL(){
    if ( server.method() == HTTP_POST ){ writeConfig();}
  HTML+=F("</body></html>"); 
  server.send(200, "text/html", HTML);
+ server.client().stop();
  HTML=""; 
  webobj.name=""; 
  webobj.css="";
@@ -1464,6 +1468,7 @@ void tSysConfig::ACL(){
 }
 void tSysConfig::Register(){ 
  HTML=F("<!DOCTYPE html><html><head><meta charset=\"UTF-8\"><title>ESP Timers Page</title><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">");
+ HTML=F("<meta http-equiv=\"Cache-Control\" content=\"no-cache, no-store, must-revalidate\"><meta http-equiv=\"Pragma\" content=\"no-cache\"><meta http-equiv=\"Expires\" content=\"0\"><meta http-equi=\"Connection\" content=\"close\">");
  HTML+=F("<link rel=\"stylesheet\" type=\"text/css\" href=\"w3.css\"><script src=\"sc.js\"></script></head><body onload=\"rewrite()\"><div class=\"w3-container w3-blue\">");
  HTML+=F("Device registration</div>");
  webobj.name="register";
@@ -1491,10 +1496,17 @@ void tSysConfig::Register(){
  form();
     if ( server.method() == HTTP_POST ){ writeConfig();}
 HTML+=F("</body></html>"); 
- server.send(200, "text/html", HTML);HTML=""; webobj.name="", webobj.css="";webobj.label=""; webobj.placeholder="";
+ server.send(200, "text/html", HTML);
+ server.client().stop();
+ HTML="";
+ webobj.name="", 
+ webobj.css="";
+ webobj.label=""; 
+ webobj.placeholder="";
 }
 void tSysConfig::MQTT(){ 
  HTML=F("<!DOCTYPE html><html><head><meta charset=\"UTF-8\"><title>ESP Timers Page</title><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">");
+ HTML=F("<meta http-equiv=\"Cache-Control\" content=\"no-cache, no-store, must-revalidate\"><meta http-equiv=\"Pragma\" content=\"no-cache\"><meta http-equiv=\"Expires\" content=\"0\"><meta http-equi=\"Connection\" content=\"close\">");
  HTML+=F("<link rel=\"stylesheet\" type=\"text/css\" href=\"w3.css\"><script src=\"sc.js\"></script></head><body onload=\"rewrite()\"><div class=\"w3-container w3-blue\">");
  HTML+=F("MQTT configuration</div>");
  webobj.name="MQTT";
@@ -1503,10 +1515,12 @@ void tSysConfig::MQTT(){
  form();
  HTML+=F("</body></html>"); 
  server.send(200, "text/html", HTML);HTML=""; webobj.name="", webobj.css="";webobj.label=""; webobj.placeholder="";
+ server.client().stop();
 }
 
 void tSysConfig::Sysinfo(){ 
  HTML=F("<!DOCTYPE html><html><head><meta charset=\"UTF-8\"><title>ESP Timers Page</title><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">");
+ HTML=F("<meta http-equiv=\"Cache-Control\" content=\"no-cache, no-store, must-revalidate\"><meta http-equiv=\"Pragma\" content=\"no-cache\"><meta http-equiv=\"Expires\" content=\"0\"><meta http-equi=\"Connection\" content=\"close\">");
  HTML+=F("<link rel=\"stylesheet\" type=\"text/css\" href=\"w3.css\"><script src=\"sc.js\"></script></head><body onload=\"rewrite()\"><div class=\"w3-container w3-blue\">");
  HTML+=F("Sysinfo</div><table class=\"w3-table w3-striped w3-border\"><tr><th>Parameter</th><th>Value</th></tr>");
  sprintf(buffer," <tr><td>ESP32 Revision</td><td>%d</td></tr>",ESP.getChipRevision());
@@ -1550,6 +1564,7 @@ void tSysConfig::Sysinfo(){
 
  HTML+=F("</body></html>");
  server.send(200, "text/html", HTML);HTML=""; webobj.name="", webobj.css="";webobj.label=""; webobj.placeholder=""; 
+ server.client().stop();
 }
 
 void tSysConfig::getIcon(){
@@ -1559,6 +1574,7 @@ void tSysConfig::getIcon(){
  if (server.streamFile(dataFile, "image/vnd") != dataFile.size()) {Serial.println(F("icon streaming error"));
  }
  dataFile.close(); 
+ server.client().stop();
 }
 void tSysConfig::getLogo(){
  File dataFile = SPIFFS.open("/logo.png", "r"); 
@@ -1567,6 +1583,7 @@ void tSysConfig::getLogo(){
  if (server.streamFile(dataFile, "image/png") != dataFile.size()) {Serial.println(F("Logo streaming error"));
  }
  dataFile.close(); 
+ server.client().stop();
 }
 void tSysConfig::getCSS(){
  File dataFile = SPIFFS.open("/w3.css", "r"); 
@@ -1575,6 +1592,7 @@ void tSysConfig::getCSS(){
  if (server.streamFile(dataFile, "text/css") != dataFile.size()) {Serial.println(F("CSS streaming error"));
  }
  dataFile.close(); 
+ server.client().stop();
 }
 void tSysConfig::getJS(){
  File dataFile = SPIFFS.open("/w3.js", "r");
@@ -1583,6 +1601,7 @@ void tSysConfig::getJS(){
  if (server.streamFile(dataFile, "text/javascript") != dataFile.size()) {Serial.println(F("w3.js streaming error"));
  }
  dataFile.close(); 
+ server.client().stop();
 }
 void tSysConfig::getSCjs(){
  File dataFile = SPIFFS.open("/sc.js", "r");
@@ -1591,14 +1610,17 @@ void tSysConfig::getSCjs(){
  if (server.streamFile(dataFile, "text/javascript") != dataFile.size()) {Serial.println(F("sc.js streaming error"));
  }
  dataFile.close(); 
+ server.client().stop();
 }
 void tSysConfig::getCharts(){
  HTML=F("<!DOCTYPE html><html><head><meta charset=\"UTF-8\"><title>ESP Timers Page</title><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">");
+ HTML=F("<meta http-equiv=\"Cache-Control\" content=\"no-cache, no-store, must-revalidate\"><meta http-equiv=\"Pragma\" content=\"no-cache\"><meta http-equiv=\"Expires\" content=\"0\"><meta http-equi=\"Connection\" content=\"close\">");
  HTML+=F("<link rel=\"stylesheet\" type=\"text/css\" href=\"w3.css\"><script src=\"sc.js\"></script></head><body onload=\"rewrite()\"><div class=\"w3-container w3-blue\">");
  HTML+=F("Charts</div>");
 
  HTML+=F("</body></html>"); 
  server.send(200, "text/html", HTML);HTML=""; webobj.name="", webobj.css="";webobj.label=""; webobj.placeholder="";
+ server.client().stop();
 }
 void tSysConfig::drawGraph(){ 
  
@@ -1610,6 +1632,7 @@ void tSysConfig::getAbout(){
  if (server.streamFile(dataFile, "text/html") != dataFile.size()) {Serial.println(F("about.html streaming error"));
  }
  dataFile.close(); 
+ server.client().stop();
 }
 void tSysConfig::getHelp(){
  File dataFile = SPIFFS.open("/help.html", "r"); 
@@ -1618,6 +1641,7 @@ void tSysConfig::getHelp(){
  if (server.streamFile(dataFile, "text/html") != dataFile.size()) {Serial.println(F("help.htm streaming error"));
  }
  dataFile.close(); 
+ server.client().stop();
 }
 void tSysConfig::handleNotFound(){
   // the 404 page, we want to show the message and give the user a link back to the index page
@@ -1629,6 +1653,7 @@ void tSysConfig::handleNotFound(){
  if (server.streamFile(dataFile, "text/html") != dataFile.size()) {Serial.println(F("404.html streaming error"));
  }
  dataFile.close();  
+ server.client().stop();
 }
 
 
