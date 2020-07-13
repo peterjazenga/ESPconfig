@@ -66,7 +66,8 @@ byte BLEConfig;
 byte APconfig; 
 byte sensorConfig;
 byte timerConfig;
-byte TZ; // defaults to GMT, handles time zone
+time_t TZ; // defaults to GMT, offset in seconds
+time_t DST; // daylight saving time offset
 char NTPserver[128];
 float setPoint; // also used as setPoint for PID loops
 float rangeValue;
@@ -122,7 +123,7 @@ typedef struct {
 #define SLOW_BLINK 150 // use for standard operations
 #define PT_IDLE  0b10100000101000001010000010100000
 #define PT_UPLOADING 0b10101010101010101010101010101010
-#define PT_CONNECTED 0b10001000100010001000100010001000
+#define PT_CONNECTED 0b00000000000010100000000000001010
 #define PT_SCANNING 0b11010000110100001101000011010000
 #define SCAN_PERIOD 5000
 #define CONNECT_PERIOD 500
@@ -356,7 +357,7 @@ void tSysConfig::run() {
 }
 
 void tSysConfig::initNTP() {
- 
+  configTime(_data.TZ, _data.DST, _data.NTPserver);
 }
 
 void tSysConfig::initWebserver() {
@@ -484,7 +485,7 @@ void tSysConfig::initConfig() {
 }
 void tSysConfig::initWiFi(){
  byte retries = 0;
- WiFi.mode(WIFI_AP_STA);
+WiFi.mode(WIFI_AP_STA);
  WiFi.disconnect();
  // scan for available networks
  scanWiFi();
@@ -578,16 +579,28 @@ if (blinkstate>3) {t=FAST_BLINK;}
  if (LEDstate>31){LEDstate=0;}
  switch (blinkstate){
   case 0:
-  case 4:{digitalWrite(LED_BUILTIN,(bool) PT_IDLE>>LEDstate ? true : false); break;}
+  case 4:{digitalWrite(LED_BUILTIN,(bool) ((PT_IDLE>>LEDstate)&1) ? true : false); break;}
   case 5:
-  case 1:{digitalWrite(LED_BUILTIN,(bool) PT_UPLOADING>>LEDstate ? true : false); break;}
+  case 1:{digitalWrite(LED_BUILTIN,(bool) ((PT_UPLOADING>>LEDstate)&1) ? true : false); break;}
   case 6:
-  case 2:{digitalWrite(LED_BUILTIN,(bool) PT_CONNECTED>LEDstate ? true : false); break;}
+  case 2:{digitalWrite(LED_BUILTIN,(bool) ((PT_CONNECTED>>LEDstate)&1) ? true : false); break;}
   case 7:
-  case 3:{digitalWrite(LED_BUILTIN,(bool) PT_SCANNING>>LEDstate ? true : false); break;}
+  case 3:{digitalWrite(LED_BUILTIN,(bool) ((PT_SCANNING>>LEDstate)&1) ? true : false); break;}
  }
  lastBlinkMillis = currentMillis;
- digitalWrite(LED_BUILTIN,digitalRead(LED_BUILTIN));// invert the state, its wrong on my board 
+ /*
+ Serial.print("led:");Serial.print(digitalRead(LED_BUILTIN));Serial.print(" State:");Serial.println(LEDstate);
+ Serial.print("sel:");Serial.print(blinkstate);Serial.print(" Shift:");Serial.println(PT_CONNECTED>>LEDstate&1);*/
+ /*
+  * #define FAST_BLINK 50 // use for errors
+#define SLOW_BLINK 150 // use for standard operations
+#define PT_IDLE  0b10100000101000001010000010100000
+#define PT_UPLOADING 0b10101010101010101010101010101010
+#define PT_CONNECTED 0b10001000100010001000100010001000
+#define PT_SCANNING 0b11010000110100001101000011010000
+*/
+
+ digitalWrite(LED_BUILTIN,!digitalRead(LED_BUILTIN));// invert the state, its wrong on my board 
  }
 }
 void tSysConfig::OTAinit(){ 
@@ -726,6 +739,7 @@ void tSysConfig::Config(){
    if ( server.method() == HTTP_POST ){ writeConfig();}
  HTML+=F("</body></html>");
  server.send(200, "text/html", HTML);
+ server.client().stop();
  HTML=""; webobj.name="", webobj.css="";webobj.label=""; webobj.placeholder="";
 }
 void tSysConfig::Time(){ 
@@ -754,12 +768,17 @@ void tSysConfig::Time(){
  webobj.name=F("TZ");
  webobj.label=F("GMT offset");
  webobj.placeholder=F("value in minutes");
- edit(webobj,_data.TZ);
+ editTime(webobj,_data.TZ);
+  webobj.name=F("DST");
+ webobj.label=F("DST offset");
+ webobj.placeholder=F("value in minutes");
+ editTime(webobj,_data.DST);
 
  form();
    if ( server.method() == HTTP_POST ){ writeConfig();}
  HTML+=F("</body></html>");
  server.send(200, "text/html", HTML);
+ server.client().stop();
  HTML=""; webobj.name="", webobj.css="";webobj.label=""; webobj.placeholder="";
 }
 void tSysConfig::OTA(){ 
@@ -797,6 +816,7 @@ void tSysConfig::OTA(){
    if ( server.method() == HTTP_POST ){ writeConfig();}
  HTML+=F("</body></html>");
  server.send(200, "text/html", HTML);
+ server.client().stop();
  HTML=""; webobj.name="", webobj.css="";webobj.label=""; webobj.placeholder="";
 }
 void tSysConfig::Sensors(){
@@ -810,6 +830,7 @@ void tSysConfig::Sensors(){
     if ( server.method() == HTTP_POST ){ writeConfig();}
 HTML+=F("</body></html>");
  server.send(200, "text/html", HTML);
+ server.client().stop();
  HTML=""; webobj.name="", webobj.css="";webobj.label=""; webobj.placeholder="";
 }
 void tSysConfig::Timers(){ 
@@ -862,6 +883,7 @@ void tSysConfig::Timers(){
    if ( server.method() == HTTP_POST ){ writeConfig();}
  HTML+=F("</body></html>"); 
  server.send(200, "text/html", HTML);
+ server.client().stop();
  HTML=""; webobj.name="", webobj.css="";webobj.label=""; webobj.placeholder="";
 }
 
@@ -884,6 +906,7 @@ void tSysConfig::ACL(){
    if ( server.method() == HTTP_POST ){ writeConfig();}
  HTML+=F("</body></html>"); 
  server.send(200, "text/html", HTML);
+ server.client().stop();
  HTML=""; 
  webobj.name=""; 
  webobj.css="";
@@ -918,8 +941,10 @@ void tSysConfig::Register(){
  edit(webobj,_data.NodeName,32);
  form();
     if ( server.method() == HTTP_POST ){ writeConfig();}
-HTML+=F("</body></html>"); 
- server.send(200, "text/html", HTML);HTML=""; webobj.name="", webobj.css="";webobj.label=""; webobj.placeholder="";
+ HTML+=F("</body></html>"); 
+ server.send(200, "text/html", HTML);
+ server.client().stop();
+ HTML=""; webobj.name="", webobj.css="";webobj.label=""; webobj.placeholder="";
 }
 void tSysConfig::MQTT(){ 
  HTML=F("<!DOCTYPE html><html><head><meta charset=\"UTF-8\"><title>ESP Timers Page</title><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">");
@@ -930,7 +955,10 @@ void tSysConfig::MQTT(){
  
  form();
  HTML+=F("</body></html>"); 
- server.send(200, "text/html", HTML);HTML=""; webobj.name="", webobj.css="";webobj.label=""; webobj.placeholder="";
+ server.send(200, "text/html", HTML); 
+ server.client().stop();
+
+ HTML=""; webobj.name="", webobj.css="";webobj.label=""; webobj.placeholder="";
 }
 
 void tSysConfig::Sysinfo(){ 
@@ -993,7 +1021,9 @@ void tSysConfig::Sysinfo(){
  // uptime
 
  HTML+=F("</body></html>");
- server.send(200, "text/html", HTML);HTML=""; webobj.name="", webobj.css="";webobj.label=""; webobj.placeholder=""; 
+ server.send(200, "text/html", HTML);
+ server.client().stop();
+ HTML=""; webobj.name="", webobj.css="";webobj.label=""; webobj.placeholder=""; 
 }
 
 void tSysConfig::getIcon(){
@@ -1003,6 +1033,7 @@ void tSysConfig::getIcon(){
  if (server.streamFile(dataFile, "image/vnd") != dataFile.size()) {Serial.println(F("icon streaming error"));
  }
  dataFile.close(); 
+ server.client().stop();
 }
 void tSysConfig::getLogo(){
  File dataFile = SPIFFS.open("/logo.png", "r"); 
@@ -1011,6 +1042,7 @@ void tSysConfig::getLogo(){
  if (server.streamFile(dataFile, "image/png") != dataFile.size()) {Serial.println(F("Logo streaming error"));
  }
  dataFile.close(); 
+ server.client().stop();
 }
 void tSysConfig::getCSS(){
  File dataFile = SPIFFS.open("/w3.css", "r"); 
@@ -1019,6 +1051,7 @@ void tSysConfig::getCSS(){
  if (server.streamFile(dataFile, "text/css") != dataFile.size()) {Serial.println(F("CSS streaming error"));
  }
  dataFile.close(); 
+ server.client().stop();
 }
 void tSysConfig::getJS(){
  File dataFile = SPIFFS.open("/w3.js", "r");
@@ -1027,6 +1060,7 @@ void tSysConfig::getJS(){
  if (server.streamFile(dataFile, "text/javascript") != dataFile.size()) {Serial.println(F("JS streaming error"));
  }
  dataFile.close(); 
+ server.client().stop();
 }
 void tSysConfig::getSCjs(){
  File dataFile = SPIFFS.open("/sc.js", "r"); 
@@ -1035,6 +1069,7 @@ void tSysConfig::getSCjs(){
  if (server.streamFile(dataFile, "text/javascript") != dataFile.size()) {Serial.println(F("sc.js streaming error"));
  }
  dataFile.close(); 
+ server.client().stop();
 }
 void tSysConfig::getCharts(){
  HTML=F("<!DOCTYPE html><html><head><meta charset=\"UTF-8\"><title>ESP Timers Page</title><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">");
@@ -1042,8 +1077,9 @@ void tSysConfig::getCharts(){
  HTML+=F("Charts</div>");
 
  HTML+=F("</body></html>"); 
- server.send(200, "text/html", HTML);HTML=""; webobj.name="", webobj.css="";webobj.label=""; webobj.placeholder="";
- 
+ server.send(200, "text/html", HTML);
+ server.client().stop();
+ HTML=""; webobj.name="", webobj.css="";webobj.label=""; webobj.placeholder="";
 }
 void tSysConfig::drawGraph(){ 
  
@@ -1055,6 +1091,7 @@ void tSysConfig::getAbout(){
  if (server.streamFile(dataFile, "text/html") != dataFile.size()) {Serial.println(F("about.html streaming error"));
  }
  dataFile.close(); 
+ server.client().stop();
 }
 void tSysConfig::getHelp(){
  File dataFile = SPIFFS.open("/help.html", "r"); 
@@ -1063,6 +1100,7 @@ void tSysConfig::getHelp(){
  if (server.streamFile(dataFile, "text/html") != dataFile.size()) {Serial.println(F("help.htm streaming error"));
  }
  dataFile.close(); 
+ server.client().stop();
 }
 void tSysConfig::handleNotFound(){
   // the 404 page, we want to show the message and give the user a link back to the index page
@@ -1074,6 +1112,7 @@ void tSysConfig::handleNotFound(){
  if (server.streamFile(dataFile, "text/html") != dataFile.size()) {Serial.println(F("404.html streaming error"));
  }
  dataFile.close();  
+ server.client().stop();
 }
 bool tSysConfig::webAuth(){
  // used by restricted Configuration pages
