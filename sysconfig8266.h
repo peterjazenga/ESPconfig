@@ -121,10 +121,10 @@ typedef struct {
 
 #define FAST_BLINK 50 // use for errors
 #define SLOW_BLINK 150 // use for standard operations
-#define PT_IDLE  0b10100000101000001010000010100000
+#define PT_IDLE      0b00000000001010100000000000101010
 #define PT_UPLOADING 0b10101010101010101010101010101010
 #define PT_CONNECTED 0b00000000000010100000000000001010
-#define PT_SCANNING 0b11010000110100001101000011010000
+#define PT_SCANNING  0b11010000000000011010000000000000
 #define SCAN_PERIOD 5000
 #define CONNECT_PERIOD 500
 
@@ -345,9 +345,9 @@ void tSysConfig::run() {
  // there is no provision for on demand update in the code yet
  // noob value is to activate OTA
  switch (_data.OTA){
- case 0: ArduinoOTA.handle(); break;
- case 2:if (millis()<300000){ ArduinoOTA.handle();} break; // active on boot for 5 minutes
- case 4:break; // totally stopped
+ case 2: ArduinoOTA.handle(); break;
+ case 1:if (millis()<300000){ ArduinoOTA.handle();} break; // active on boot for 5 minutes
+ case 0:break; // totally stopped
  default: ArduinoOTA.handle();
  }
  server.handleClient();
