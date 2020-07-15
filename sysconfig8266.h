@@ -178,7 +178,6 @@ class tSysConfig{
   bool inOptgroup;
   bool lightHTML;
   public:
-  int32_t configPin = D2;
   char *author;
   char *copyright;
   char *version;
@@ -190,9 +189,14 @@ class tSysConfig{
   eSensorClass SensorClass=s_undefined;
   String SensorName;
   int SensorFrequency=100; // time in milliseconds
+  bool validConfig=false;
  public:
 // this is API to the Config system but the only routines that the user is required to utilize are tSysConfig(); & run();
 // if desired, the device name can be changed prior to calling init
+ byte WPSpin=0;
+ bool wpsSuccess=false;
+ // in the event the system is unconfigured, it will activate wps on reset
+ 
  htmlproperties webobj;
  ESP8266WebServer server;
  ESP8266WiFiMulti multiWiFi;
@@ -204,6 +208,7 @@ class tSysConfig{
  void initNTP(); // time system
  void initWiFi();
  void scanWiFi();
+ bool WPS();
  void initWebserver(); // sets up the network and servers
  bool readConfig();// reads from the Configuration file, also enters system defaults to complete initialization routines
  void initConfig();// reads the Configuration file, also responsiible for calling firstrun if the Config files do not exist
@@ -212,6 +217,7 @@ class tSysConfig{
  void OTAinit(); // Over the air update system management
  void blink(); 
  void init(); // startup code
+ void init(int WPS){WPSpin=WPS; init();}
  void run(); // called from the loop code to maintain periodic functions
  // there are lots of web functions as this is a web based Configuration program
  void indexPage(void);
@@ -334,7 +340,10 @@ void tSysConfig::init() {
  Serial.print(__DATE__);
  Serial.print(" @ ");
  Serial.println(__TIME__);
-  initConfig();
+ if (WPSpin>0){
+  pinMode(WPSpin,INPUT_PULLUP);
+ }
+ initConfig();
  initWiFi();
  initWebserver();
  initNTP();
@@ -352,12 +361,14 @@ void tSysConfig::run() {
  }
  server.handleClient();
  MDNS.update(); 
+ if (digitalRead(WPSpin)==0){WPS();}
  currentMillis = millis(); 
  blink(); 
 }
 
 void tSysConfig::initNTP() {
   configTime(_data.TZ, _data.DST, _data.NTPserver);
+  
 }
 
 void tSysConfig::initWebserver() {
@@ -452,9 +463,9 @@ void tSysConfig::initConfig() {
  if (_data.burncount == 0) {
  Serial.print("Init failure: ");
  // initialize the flash memory
- strlcpy(_data.AccessPoints[0].WiFiname,"jazenga",32);
- strlcpy(_data.AccessPoints[0].WiFipassword,"FVLICEYE",32);
- strlcpy(_data.APname,"TRL_Device",32);
+ //strlcpy(_data.AccessPoints[0].WiFiname,"jazenga",32);
+ //strlcpy(_data.AccessPoints[0].WiFipassword,"FVLICEYE",32);
+ strlcpy(_data.APname,"TRL_ESP8266_Device",32);
  strlcpy(_data.APpassword,"12345678",32);
  strlcpy(_data.userName,"admin",32);
  strlcpy(_data.userPass,"admin",32);
@@ -481,8 +492,31 @@ void tSysConfig::initConfig() {
  _data.PIDcontrolled=true; // if running on a PID, the value used for setPoint is setPoint*/
  // initialize the timers to zero hours on zero days
  Serial.println("Default parameters loaded");
-} 
+ } else {
+  validConfig=true;
+  }
 }
+bool tSysConfig::WPS(){
+  Serial.println("WPS running");
+  WiFi.mode(WIFI_STA);// must be in this mode to run wps
+  wpsSuccess=WiFi.beginWPSConfig(); 
+  blinkstate=3;
+  if(wpsSuccess) {
+      // Well this means not always success :-/ in case of a timeout we have an empty ssid
+      String newSSID = WiFi.SSID();
+      if(newSSID.length() > 0) {
+       blinkstate=7;
+        String psk = WiFi.psk();
+        // WPSConfig has already connected in STA mode successfully to the new station. 
+        Serial.printf("WPS finished. Connected successfull to SSID '%s':'%s'\n", newSSID.c_str(),psk.c_str());
+       strlcpy(_data.AccessPoints[0].WiFiname,newSSID.c_str(),32);
+       strlcpy(_data.AccessPoints[0].WiFipassword, psk.c_str(),32);
+       writeConfig();
+      } 
+  } 
+WiFi.mode(WIFI_AP_STA);// needs to be in this mode for normal operations
+}
+
 void tSysConfig::initWiFi(){
  byte retries = 0;
 WiFi.mode(WIFI_AP_STA);
@@ -493,7 +527,9 @@ WiFi.mode(WIFI_AP_STA);
  multiWiFi.addAP(_data.AccessPoints[i].WiFiname, _data.AccessPoints[i].WiFipassword);
  }
  WiFi.beginSmartConfig();
-
+ if (!validConfig){
+   WPS();
+ } else {
  // WiFi.begin(_data.AccessPoints[0].WiFiname, _data.AccessPoints[0].WiFipassword); 
  // wait for connection here
  while ((multiWiFi.run() != WL_CONNECTED) && (retries<30)) {
@@ -515,6 +551,7 @@ WiFi.mode(WIFI_AP_STA);
  else{
  Serial.println(F("WiFi failed to connect"));
  }
+}
  WiFi.softAPConfig(_data.ip,_data.gateway,_data.subnet);
  // check if wifi is connected and what the AP rules are
  // Turn on local Access point
