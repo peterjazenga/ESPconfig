@@ -12,7 +12,7 @@
  *  sysConfig.run(); keeps things updated, provides for servicing of the OTA & Web server issues among others, it also handles the blinking of the status LED
  */
 
-#include "sysconfig32.h";
+#include "sysconfig8266.h";
 
 void setup() {
   Serial.begin(115200);
@@ -23,3 +23,4 @@ void setup() {
 void loop() {
   sysConfig.run();
 }
+
