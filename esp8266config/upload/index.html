@@ -1,39 +1,602 @@
-<!DOCTYPE html><html><title>ESP protopage</title
-><meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<link rel="stylesheet" type="text/css" href="w3.css">
-<script src="w3.js"></script>
-<body>
-<div class="w3-container w3-center"><a href="https://theresearchlaboratory.com"><img src="logo.png" alt="logo" style="width:50%;max-width:200px" class="w3-image w3-hover-opacity">
-</a></div><div class="w3-sidebar w3-bar-block w3-collapse w3-card w3-animate-left" style="width:200px;" id="mySidebar"><button class="w3-bar-item w3-button w3-large w3-hide-large" onclick="w3_close()">Close &times;</button>
-<a href="about.html" target="frame" class="w3-bar-item w3-button">&#10069 About</a>
-<a href="charts.html" target="frame" class="w3-bar-item w3-button">&#128202 Charts</a>
-<a href="config.html" target="frame" class="w3-bar-item w3-button">&#128246 WiFi</a>
-<a href="sensor.html" target="frame" class="w3-bar-item w3-button">&#127777 Sensor</a>
-<a href="time.html" target="frame" class="w3-bar-item w3-button">&#128336 Time</a>
-<a href="timer.html" target="frame" class="w3-bar-item w3-button">&#9200 Timers</a>
-<a href="acl.html" target="frame" class="w3-bar-item w3-button">&#128272 Access control</a>
-<a href="register.html" target="frame" class="w3-bar-item w3-button">&#9993 Register</a>
-<a href="mqtt.html" target="frame" class="w3-bar-item w3-button">&#128295 MQTT</a>
-<a href="sysinfo.html" target="frame" class="w3-bar-item w3-button">&#9881 Sysinfo</a>
-<a href="update.html" target="frame" class="w3-bar-item w3-button">&#128189 Bios Update</a>
-<a href="help.html" target="frame" class="w3-bar-item w3-button">&#10067 Help</a>
-<a href="https://theresearchlaboratory.com" target="frame" class="w3-bar-item w3-button">&#8633</a>
-</div><div class="w3-main" style="margin-left:200px"><div class="w3-teal"><button class="w3-button w3-teal w3-large w3-hide-large" onclick="w3_open()">&#9776;</button><div class="w3-container w3-right-align">
-<abbr title="About"><a href="about.html" target="frame" class="w3-bar-item w3-button">&#10069</a></abbr>
-<abbr title="Charts"><a href="charts.html" target="frame" class="w3-bar-item w3-button">&#128202</a></abbr>
-<abbr title="WiFi settings"><a href="config.html" target="frame" class="w3-bar-item w3-button">&#128246</a></abbr>
-<abbr title="Sensor settings"><a href="sensor.html" target="frame" class="w3-bar-item w3-button">&#127777</a></abbr>
-<abbr title="Time settings"><a href="time.html" target="frame" class="w3-bar-item w3-button">&#128336</a></abbr>
-<abbr title="Time Alarm settings"><a href="timer.html" target="frame" class="w3-bar-item w3-button">&#9200</a></abbr>
-<abbr title="Access control"><a href="acl.html" target="frame" class="w3-bar-item w3-button">&#128272</a></abbr>
-<abbr title="Register online"><a href="register.html" target="frame" class="w3-bar-item w3-button">&#9993</a></abbr>
-<abbr title="MQTT settings"><a href="mqtt.html" target="frame" class="w3-bar-item w3-button">&#128295</a></abbr>
-<abbr title="System information"><a href="sysinfo.html" target="frame" class="w3-bar-item w3-button">&#9881</a></abbr>
-<abbr title="Bios Update"><a href="update.html" target="frame" class="w3-bar-item w3-button">&#128189</a></abbr>
-<abbr title="Help"><a href="help.html" target="frame" class="w3-bar-item w3-button">&#10067</a></abbr>
-<abbr title="The Research Laboratory"><a href="https://theresearchlaboratory.com" target="frame" class="w3-bar-item w3-button">&#8633</a>
+<!DOCTYPE html><html><head><title>ESP protopage</title><meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <meta http-equi="Connection" content="close">
+    
+    <script>
+    
+    // load the data from AJAX, then put it into the various form fields
+    // this expects data in all fields and so modifications of the forms must be reflected in the processing code
+function int2ip (ipInt) {
+ //   return ( (ipInt>>>24) +'.' + (ipInt>>16 & 255) +'.' + (ipInt>>8 & 255) +'.' + (ipInt & 255) );
+    return ( (ipInt & 255) +'.' + (ipInt>>8 & 255) +'.' + (ipInt>>16 & 255) +'.' + (ipInt>>>24) );
+}
+function ip2int(ip) {
+    return ip.split('.').reduce(function(ipInt, octet) { return (ipInt<<8) + parseInt(octet, 10)}, 0) >>> 0;
+}
+function numberWithCommas(x) {
+  return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+}
+function timeConvert(n) {
+var num = n;
+var hours = (num / 60);
+var rhours = Math.floor(hours);
+var minutes = (hours - rhours) * 60;
+var rminutes = Math.round(minutes);
 
-</div></div><iframe id="info" name="frame" src="sysinfo.html" width="100%" height="600"></iframe></div>
-<div class="w3-center">Copyright ©2020 Peter Dunne <a href=https://theresearchlaboratory.com>The Research Laboratory</a></div><script>function w3_open() {document.getElementById("mySidebar").style.display = "block";
-}function w3_close() {document.getElementById("mySidebar").style.display = "none";}</script></body></html>
+if (rhours>9) {hours=rhours;}else{hours="0"+rhours;}
+if (rminutes>9) {minutes=rminutes;}else{minutes="0"+rminutes;}
+
+return hours + ":" + minutes;
+}
+
+var JSONobj = JSONobj = JSON.parse(
+    '{"WiFi":["jazenga","","","",""],"data":["TRL_Device","12345678",11,1,"TRL_Device","1111",1,"admin","admin",2,"admin"],"MQTT":["server.mqtt.com",129,"MQTTuser","MQTTpass"],"time":["north-america.pool.ntp.org",87802,87544],"sysInfo":[1,"v3.2.3-14-gd3e562907",240,80000000,4194304,"DIO","jazenga",-469653312,16885952,17082560,"Jul 10 2020","08:10:14"],"alarms":[61,183,305,427,549,671,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,122,244,366,488,610,732,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,2,3,4,5,6,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]}'    
+);
+
+function pull(){
+var JSONpull = new XMLHttpRequest();
+
+//JSONpull.onreadystatechange = function() {
+//  if (this.readyState == 4 && this.status == 200) 
+  {
+//    JSONObj = JSON.parse(this.responseText);
+   // READ THE PACKAGE AND UPDATE THE FIELDS
+        for (i = 0; i < 5; i++)
+        { 
+    // WiFi configuration  
+          document.getElementsByName('SSID_'+i)[0].value= JSONobj.WiFi[i];
+        }
+    // Access point
+        document.getElementsByName('APname')[0].value= JSONobj.data[0];  
+        document.getElementsByName('APpass')[0].value= JSONobj.data[1];  
+        document.getElementsByName('APchannel')[0].value= JSONobj.data[2];  
+        document.getElementsByName('APconfig')[0].selectedIndex= JSONobj.data[3];  
+    // Bluetooth
+        document.getElementsByName('BLEname')[0].value= JSONobj.data[4];  
+        document.getElementsByName('BLEpassword')[0].value= JSONobj.data[5];  
+        document.getElementsByName('BLEconfig')[0].selectedIndex= JSONobj.data[6]; 
+     // security   
+        document.getElementsByName('userName')[0].value= JSONobj.data[7];  
+        document.getElementsByName('userPass')[0].value= JSONobj.data[8];  
+        document.getElementsByName('userPass_verify')[0].value= JSONobj.data[8];  
+     // OTA, over the air software update   
+        document.getElementsByName('OTA')[0].selectedIndex= JSONobj.data[9]; 
+        document.getElementsByName('OTApass')[0].value= JSONobj.data[10];  
+        document.getElementsByName('OTApass_verify')[0].value= JSONobj.data[10];  
+     // Time server
+        document.getElementsByName('NTPserverValue')[0].value= JSONobj.time[0];  
+        document.getElementsByName('TZ')[0].value= timeConvert(JSONobj.time[1]);  
+        document.getElementsByName('DST')[0].value= timeConvert(JSONobj.time[2]);  
+    // Alarms
+
+    // MQTT
+    document.getElementsByName("MQTTserver")[0].value=JSONobj.MQTT[0];
+    document.getElementsByName("MQTTport")[0].value=JSONobj.MQTT[1];
+    document.getElementsByName("MQTTuser")[0].value=JSONobj.MQTT[2];
+    document.getElementsByName("MQTTpass")[0].value=JSONobj.MQTT[3];
+
+    // sysInfo
+    document.getElementById("Revision").innerHTML=JSONobj.sysInfo[0];
+    document.getElementById("SDK").innerHTML=JSONobj.sysInfo[1];
+    document.getElementById("CPUspeed").innerHTML=JSONobj.sysInfo[2]+" MHz";
+    document.getElementById("FlashSpeed").innerHTML=numberWithCommas(JSONobj.sysInfo[3])+" Hz";
+    document.getElementById("FlashSize").innerHTML=numberWithCommas(JSONobj.sysInfo[4])+" Bytes";
+    document.getElementById("Mode").innerHTML=JSONobj.sysInfo[5];
+    document.getElementById("SSID").innerHTML=JSONobj.sysInfo[6];
+    document.getElementById("IP").innerHTML=int2ip(JSONobj.sysInfo[7])+"<br>"+int2ip(JSONobj.sysInfo[8]);
+    document.getElementById("AP").innerHTML=JSONobj.data[0]; 
+    document.getElementById("APpass").innerHTML=JSONobj.data[1];
+    document.getElementById("APIP").innerHTML=int2ip(JSONobj.sysInfo[9]);
+    document.getElementById("NTP").innerHTML=JSONobj.time[0];  
+    document.getElementById("comp_date").innerHTML=JSONobj.sysInfo[10]+" - "+JSONobj.sysInfo[11];
+
+    for (i = 0; i < 32; i++)
+        {
+            document.getElementsByName('st_'+i)[0].value= timeConvert(JSONobj.alarms[i]); 
+            document.getElementsByName('et_'+i)[0].value= timeConvert(JSONobj.alarms[32+i]); 
+            document.getElementsByName('d_'+i)[0].selectedIndex= JSONobj.alarms[64+i]; 
+        }
+ 
+   // }
+  }
+
+
+JSONpull.open("GET", "data.json", true);
+    // data is posted to the server in the conventional post fashion
+};    
+    
+    function openTab(id)
+    {
+        var i;
+        var x = document.getElementsByClassName("tab");
+        for (i = 0; i < x.length; i++)
+        {
+            x[i].className = x[i].className.replace(" w3-show", "");
+        }
+        var x = document.getElementById(id);
+        if (x.className.indexOf("w3-show") == -1)
+        {
+            x.className += " w3-show";
+        }
+    }
+    function openPage(PageName) {
+       var i;
+      var x = document.getElementsByClassName("Page");
+      for (i = 0; i < x.length; i++) {
+        x[i].style.display = "none";  
+      }
+      document.getElementById(PageName).style.display = "block";  
+      w3_close();
+      pull();
+    }
+    
+    function inputrewrite(tag)
+    {
+        list = document.getElementsByTagName(tag);
+        for (i = 0; i < list.length; i++)
+        {
+            var label = list[i].getAttribute("label");
+            if (label)
+            {
+                var newItem = document.createElement("label");
+                newItem.innerHTML = label;
+                list[i].parentNode.insertBefore(newItem, list[i]);
+                var name=list[i].getAttribute("name");
+                if (!name){ list[i].name=label;}
+            }
+    
+            if (list[i].className.indexOf("w3-input") == -1)
+            {
+                list[i].className += "w3-input w3-border";
+            }
+        }
+    }
+    function optionrewrite()
+    {
+        inputrewrite("select");
+        list = document.getElementsByTagName("select");
+        for (i = 0; i < list.length; i++)
+        {
+            var data = list[i].getAttribute("value");
+            if (data)
+            {
+             list[i].selectedIndex= data;
+            }
+        }
+    }
+    
+    function rewrite()
+    {
+        varx = "";
+        var list = document.getElementsByTagName("fieldset");
+        for (i = 0; i < list.length; i++)
+        {
+            if (list[i].className.indexOf("w3-container") == -1)
+            {
+                list[i].className += "w3-container w3-hide tab";
+            }
+        }
+    
+        list = document.getElementsByTagName("button");
+        for (i = 0; i < list.length; i++)
+        {
+            if (list[i].className.indexOf("w3-bar-item") == -1)
+            {
+                list[i].className += "w3-bar-item w3-button";
+            }
+        }
+        list = document.getElementsByTagName("input");
+        for (i = 0; i < list.length; i++)
+        {
+          list[i].addEventListener("change", formChanged, false);
+    
+        }
+        list = document.getElementsByTagName("select");
+        for (i = 0; i < list.length; i++)
+        {
+          list[i].addEventListener("change", formChanged, false);
+    
+        }
+    
+        inputrewrite("input");
+        optionrewrite();
+    }
+    function openWiFi(){
+        openPage('WiFi');
+        openTab('A');
+    }
+    function openTime(){
+        openPage('time');
+        openTab('ntp');
+    }
+    function formChanged(selectObject) {
+        document.getElementById('saveM').style.display = "";  
+        document.getElementById('save').style.display = "";  
+        document.getElementById('resetM').style.display = "";  
+        document.getElementById('reset').style.display = "";  
+    }
+    function resetChanges(selectObject) {
+    
+       if (confirm("Reset ?"))
+       { 
+        var r=document.getElementById("sysConfig").reset();
+    
+        document.getElementById('saveM').style.display = "none";  
+        document.getElementById('save').style.display = "none";  
+        document.getElementById('resetM').style.display = "none";  
+        document.getElementById('reset').style.display = "none";  }
+    }  
+    function w3_open() {document.getElementById("mySidebar").style.display = "block";}
+    function w3_close() {document.getElementById("mySidebar").style.display = "none";}
+    function saveChanges(){
+        if (confirm("Update and Restart your device?")){
+          document.getElementById("sysConfig").submit();}
+    }
+    function validateForm() {
+     
+     return true;
+     }
+   
+    </script>
+    <style>
+    /* the style section has been heavily edited to remove unused items */
+    /* W3.CSS 4.13 June 2019 by Jan Egil and Borge Refsnes */
+    html{box-sizing:border-box}*,*:before,*:after{box-sizing:inherit}
+    /* Extract from normalize.css by Nicolas Gallagher and Jonathan Neal git.io/normalize */
+    html{-ms-text-size-adjust:100%;-webkit-text-size-adjust:100%}body{margin:0}
+    article,aside,details,figcaption,figure,footer,header,main,menu,nav,section{display:block}summary{display:list-item}
+    a{background-color:transparent}a:active,a:hover{outline-width:0}
+    abbr[title]{border-bottom:none;text-decoration:underline;text-decoration:underline dotted}
+    b,strong{font-weight:bolder}dfn{font-style:italic}mark{background:#ff0;color:#000}
+    small{font-size:80%}sub,sup{font-size:75%;line-height:0;position:relative;vertical-align:baseline}
+    sub{bottom:-0.25em}sup{top:-0.5em}figure{margin:1em 40px}img{border-style:none}
+    code,kbd,pre,samp{font-family:monospace,monospace;font-size:1em}hr{box-sizing:content-box;height:0;overflow:visible}
+    button,input,select,textarea,optgroup{font:inherit;margin:0}optgroup{font-weight:bold}
+    button,input{overflow:visible}button,select{text-transform:none}
+    button,[type=button],[type=reset],[type=submit]{-webkit-appearance:button}
+    button::-moz-focus-inner,[type=button]::-moz-focus-inner,[type=reset]::-moz-focus-inner,[type=submit]::-moz-focus-inner{border-style:none;padding:0}
+    button:-moz-focusring,[type=button]:-moz-focusring,[type=reset]:-moz-focusring,[type=submit]:-moz-focusring{outline:1px dotted ButtonText}
+    fieldset{border:1px solid #c0c0c0;margin:0 2px;padding:.35em .625em .75em}
+    legend{color:inherit;display:table;max-width:100%;padding:0;white-space:normal}textarea{overflow:auto}
+    [type=checkbox],[type=radio]{padding:0}
+    [type=number]::-webkit-inner-spin-button,[type=number]::-webkit-outer-spin-button{height:auto}
+    [type=search]{-webkit-appearance:textfield;outline-offset:-2px}
+    [type=search]::-webkit-search-decoration{-webkit-appearance:none}
+    ::-webkit-file-upload-button{-webkit-appearance:button;font:inherit}
+    /* End extract */
+    html,body{font-family:Verdana,sans-serif;font-size:15px;line-height:1.5}html{overflow-x:hidden}
+    h1{font-size:36px}h2{font-size:30px}h3{font-size:24px}h4{font-size:20px}h5{font-size:18px}h6{font-size:16px}
+    h1,h2,h3,h4,h5,h6{font-family:"Segoe UI",Arial,sans-serif;font-weight:400;margin:10px 0}
+    hr{border:0;border-top:1px solid #eee;margin:20px 0}
+    .w3-table,.w3-table-all{border-collapse:collapse;border-spacing:0;width:100%;display:table}.w3-table-all{border:1px solid #ccc}
+    .w3-bordered tr,.w3-table-all tr{border-bottom:1px solid #ddd}.w3-striped tbody tr:nth-child(even){background-color:#f1f1f1}
+    .w3-table-all tr:nth-child(odd){background-color:#fff}.w3-table-all tr:nth-child(even){background-color:#f1f1f1}
+    .w3-centered tr th,.w3-centered tr td{text-align:center}
+    .w3-table td,.w3-table th,.w3-table-all td,.w3-table-all th{padding:8px 8px;display:table-cell;text-align:left;vertical-align:top}
+    .w3-table th:first-child,.w3-table td:first-child,.w3-table-all th:first-child,.w3-table-all td:first-child{padding-left:16px}
+    .w3-button{border:none;display:inline-block;padding:8px 16px;vertical-align:middle;overflow:hidden;text-decoration:none;color:inherit;background-color:inherit;text-align:center;cursor:pointer;white-space:nowrap}
+    .w3-button{-webkit-touch-callout:none;-webkit-user-select:none;-khtml-user-select:none;-moz-user-select:none;-ms-user-select:none;user-select:none}   
+    .w3-ripple:active{opacity:0.5}.w3-ripple{transition:opacity 0s}
+    .w3-input{padding:8px;display:block;border:none;border-bottom:1px solid #ccc;width:100%}
+    .w3-dropdown-hover:hover > .w3-button:first-child,.w3-dropdown-click:hover > .w3-button:first-child{background-color:#ccc;color:#000}
+    .w3-sidebar{height:100%;width:200px;background-color:#fff;position:fixed!important;z-index:1;overflow:auto}
+    .w3-bar-block .w3-dropdown-hover,.w3-bar-block .w3-dropdown-click{width:100%}
+    .w3-bar-block .w3-dropdown-hover .w3-dropdown-content,.w3-bar-block .w3-dropdown-click .w3-dropdown-content{min-width:100%}
+    .w3-bar-block .w3-dropdown-hover .w3-button,.w3-bar-block .w3-dropdown-click .w3-button{width:100%;text-align:left;padding:8px 16px}
+    .w3-main,#main{transition:margin-left .4s}
+    .w3-bar .w3-button{white-space:normal}
+    .w3-bar-block .w3-bar-item{width:100%;display:block;padding:8px 16px;text-align:left;border:none;white-space:normal;float:none;outline:0}
+    .w3-bar-block.w3-center .w3-bar-item{text-align:center}.w3-block{display:block;width:100%}
+    .w3-responsive{display:block;overflow-x:auto}
+    .w3-container:after,.w3-container:before,.w3-panel:after,.w3-panel:before,
+    .w3-hide{display:none!important}.w3-show-block,.w3-show{display:block!important}.w3-show-inline-block{display:inline-block!important}
+    .w3-hide-small{display:none!important}.w3-mobile{display:block;width:100%!important}.w3-bar-item.w3-mobile,.w3-dropdown-hover.w3-mobile,.w3-dropdown-click.w3-mobile{text-align:center}
+    .w3-dropdown-hover.w3-mobile,.w3-dropdown-hover.w3-mobile .w3-btn,.w3-dropdown-hover.w3-mobile .w3-button,.w3-dropdown-click.w3-mobile,.w3-dropdown-click.w3-mobile .w3-btn,.w3-dropdown-click.w3-mobile .w3-button{width:100%}}
+    @media (max-width:768px){.w3-modal-content{width:500px}.w3-modal{padding-top:50px}}
+    @media (min-width:993px){.w3-modal-content{width:900px}.w3-hide-large{display:none!important}.w3-sidebar.w3-collapse{display:block!important}}
+    @media (max-width:992px) and (min-width:601px){.w3-hide-medium{display:none!important}}
+    @media (max-width:992px){.w3-sidebar.w3-collapse{display:none}.w3-main{margin-left:0!important;margin-right:0!important}}
+    .w3-container,.w3-panel{padding:0.01em 16px}.w3-panel{margin-top:16px;margin-bottom:16px}
+    .w3-card,.w3-card-2{box-shadow:0 2px 5px 0 rgba(0,0,0,0.16),0 2px 10px 0 rgba(0,0,0,0.12)}
+    .w3-card-4{box-shadow:0 4px 10px 0 rgba(0,0,0,0.2),0 4px 20px 0 rgba(0,0,0,0.19)}
+    .w3-center{text-align:center!important}
+    .w3-border{border:1px solid #ccc!important}
+    .w3-section{margin-top:16px!important;margin-bottom:16px!important}
+    .w3-padding-small{padding:4px 8px!important}.w3-padding{padding:8px 16px!important}.w3-padding-large{padding:12px 24px!important}
+    .w3-padding-16{padding-top:16px!important;padding-bottom:16px!important}.w3-padding-24{padding-top:24px!important;padding-bottom:24px!important}
+    .w3-padding-32{padding-top:32px!important;padding-bottom:32px!important}.w3-padding-48{padding-top:48px!important;padding-bottom:48px!important}
+    .w3-padding-64{padding-top:64px!important;padding-bottom:64px!important}
+    .w3-button:hover{color:#000!important;background-color:#ccc!important}
+    
+    /* Colors */
+    
+    .w3-blue{color:#fff!important;background-color:#2196F3!important}
+    .w3-light-blue{color:#000!important;background-color:#87CEEB!important}
+    .w3-blue-grey,.w3-blue-gray{color:#fff!important;background-color:#607d8b!important}
+    .w3-light-grey{color:#000!important;background-color:#f1f1f1!important}
+    
+    </style>
+    </head>
+    <body onload="rewrite()">
+    <div class="w3-container w3-center">
+        <a href="https://theresearchlaboratory.com">
+            <img src="" alt="logo" style="width:50%;max-width:200px" class="w3-image w3-hover-opacity">
+    </a></div>
+    <div class="w3-sidebar w3-bar-block w3-collapse w3-card w3-animate-left" style="width:200px;" id="mySidebar">
+        <button  type="button"  class="w3-bar-item w3-button w3-large w3-hide-large " onclick="w3_close()">Close &times;</button>
+    
+    <a href="register.html" target="frame" class="w3-bar-item w3-button">&#9993 Register</a>
+    
+      <button  type="button"  class="w3-bar-item w3-button" onclick="openPage('about')">&#10069 About</button></attr>
+      <button  type="button"  class="w3-bar-item w3-button" onclick="openPage('stats')">&#128202 Charts</button>
+      <button  type="button"  class="w3-bar-item w3-button" onclick="openWiFi()">&#128246 WiFi</button>
+      <button  type="button"  class="w3-bar-item w3-button" onclick="openPage('sensor')">&#127777 Sensor</button>
+      <button  type="button"  class="w3-bar-item w3-button" onclick="openTime()">&#128336 Time &#9200</button>
+      <button  type="button"  class="w3-bar-item w3-button" onclick="openPage('ACL')">&#128272 Access control</button>
+      <button  type="button"  class="w3-bar-item w3-button" onclick="openPage('MQTT')">&#128295 MQTT</button>
+      <button  type="button"  class="w3-bar-item w3-button" onclick="openPage('sysInfo')">&#9881 sysInfo</button>
+      <button  type="button"  class="w3-bar-item w3-button" onclick="openPage('update')">&#128189 Bios Update</button>
+      <button  type="button"  class="w3-bar-item w3-button" onclick="openPage('help')">❓ Help</button>
+      <button id="saveM"  type="button" class="w3-bar-item w3-button" onclick="saveChanges()" style="display:none">✅ Save & 🌀 Restart</button>
+      <button id="resetM" type="button" class="w3-bar-item w3-button" onclick="resetChanges()" style="display:none">❌ Reset forms</button>
+    
+    <a href="https://theresearchlaboratory.com" target="frame" class="w3-bar-item w3-button">&#8633</a>
+    </div>
+    <div class="w3-main" style="margin-left:200px">
+        <div class="w3-light-blue"><button  type="button"  class="w3-button w3-light-blue w3-large w3-hide-large " onclick="w3_open()">&#9776;</button>
+    
+        <abbr title="About"><button  type="button"  class="w3-bar-item w3-button" onclick="openPage('about')">&#10069</button></abbr>
+        <abbr title="Charts"><button  type="button"  class="w3-bar-item w3-button" onclick="openPage('stats')">&#128202</button></abbr>
+        <abbr title="WiFi & Bluetooth settings"><button  type="button"  class="w3-bar-item w3-button" onclick="openWiFi()">&#128246</button></abbr>
+        <abbr title="Sensor configuration and readings"><button  type="button"  class="w3-bar-item w3-button" onclick="openPage('sensor')">&#127777</button></abbr>
+        <abbr title="Time and Alarms"><button  type="button"  class="w3-bar-item w3-button" onclick="openTime()">&#128336</button></abbr>
+        <abbr title="Access control settings"><button  type="button"  class="w3-bar-item w3-button" onclick="openPage('ACL')">&#128272</button></abbr>
+        <abbr title="MQTT settings"><button  type="button"  class="w3-bar-item w3-button" onclick="openPage('MQTT')">&#128295</button></abbr>
+        <abbr title="sysInfo"><button  type="button"  class="w3-bar-item w3-button" onclick="openPage('sysInfo')">&#9881</button></abbr>
+        <abbr title="Update"><button  type="button"  class="w3-bar-item w3-button" onclick="openPage('update')">&#128189</button></abbr>
+        <abbr title="Help"><button  type="button"  class="w3-bar-item w3-button" onclick="openPage('help')">❓</button></abbr>
+        <abbr title="Save changes and reboot device"><button id="save" class="w3-bar-item w3-button" onclick="saveChanges()" style="display:none">✅</button></abbr>
+        <abbr title="Cancel all form changes"><button id="reset" type="button" class="w3-bar-item w3-button" onclick="resetChanges()" style="display:none">❌</button></abbr>
+    
+    <abbr title="The Research Laboratory"><a href="https://theresearchlaboratory.com" target="frame" class="w3-bar-item w3-button">&#8633</a>
+      
+    </div>
+    <form  id="sysConfig" name="sysConfig" onsubmit="return validateForm()"  method="post" autocomplete="on">
+     <div id="info" name="frame" >
+        
+        <div id="about" class="w3-panel Page"  style="display:none">
+            <div class="w3-container w3-blue">
+                About
+              </div>
+           <p>    
+            ESPconfig is a configuration tool for ESP32 & ESP8266 devices<br>
+            
+           </p><p>
+            sysConfig is built with the following goals</p>
+            <ul>
+              <li>Ease of use
+              <li>Persistent settings using a config file stored in SPIFFS
+              <li>Time setting functions
+              <li>OTA updates
+              <li>User control
+              <li>Online registration of the user & device
+              <li>Shared login update across multiple devices on the same subnet
+              <li>Ability to login to multiple WiFi access points
+              <li>Hotspot, WiFi NAT extender
+              <li>For ESP32, Bluetooth configuration
+              <li>Extendable config pages with easy to use form building objects
+              <li>Class based for ease of integration and use
+              <li>Easy to brand
+              <li>Help/About page supported and loaded from SPIFFS
+              <li>Arduino IDE
+              <li>NTP updates
+              <li>Mozilla Public License    
+              <li><a href="https://github.com/peterjazenga/ESPconfig" target="_blank">Available on github</a>
+            </ul>
+         </div>
+        <div id="charts" class="w3-panel Page"  style="display:none"></div>
+        <div id="WiFi" class="w3-panel Page"  style="display:none">
+            <div class="w3-container w3-blue">WiFi configuration <button  type="button"  onclick="openTab('A')">WiFi connection</button>
+                <button  type="button"  onclick="openTab('B')">AP</button><button  type="button"  onclick="openTab('C')">Bluetooth</button>
+            </div>
+            
+                <fieldset id="A">
+                    <input type="text" name="SSID_0" label="WiFi 1:" value="jazenga" placeholder="WiFi SSID" size="32" >
+                    <input type="password" name="SSID_pass_0" label="Password:" value="FVLICEYE" placeholder="password" >
+                    <input type="password" name="SSID_pass_0_verify" value="FVLICEYE" placeholder="verify password" >
+                    <input type="text" name="SSID_1" label="WiFi 2:" value="" placeholder="WiFi SSID" size="32" >
+                    <input type="password" name="SSID_pass_1" label="Password:" value="" placeholder="password" >
+                    <input type="password" name="SSID_pass_1_verify" value="" placeholder="verify password" >
+                    <input type="text" name="SSID_2" label="WiFi 3:" value="" placeholder="WiFi SSID" size="32" >
+                    <input type="password" name="SSID_pass_2" label="Password:" value="" placeholder="password" >
+                    <input type="password" name="SSID_pass_2_verify" value="" placeholder="verify password" >
+                    <input type="text" name="SSID_3" label="WiFi 4:" value="" placeholder="WiFi SSID" size="32" >
+                    <input type="password" name="SSID_pass_3" label="Password:" value="" placeholder="password" >
+                    <input type="password" name="SSID_pass_3_verify" value="" placeholder="verify password" >
+                    <input type="text" name="SSID_4" label="WiFi 5:" value="" placeholder="WiFi SSID" size="32" >
+                    <input type="password" name="SSID_pass_4" label="Password:" value="" placeholder="password" >
+                    <input type="password" name="SSID_pass_4_verify" value="" placeholder="verify password" >
+                </fieldset>
+                    
+                <fieldset id="B">
+                    <input type="text" name="APname" label="AP name:" value="" placeholder="Access point name" size="32" >
+                    <input type="text" name="APpass" label="Password:" value="" placeholder="password" >
+                       
+                    <input type="number" name="APchannel" label="AP channel:" value="11" placeholder="range is 1 - 13" min="1" max="13" >
+                    <select name="APconfig" label="Ap Configuration" Value="2">
+                        <option value="0" >Disabled</option>
+                        <option value="1" >Active on boot</option>
+                        <option value="2" >Always active</option>
+                        <option value="3" >Active Android compatible</option>
+                        </select>
+                </fieldset>
+                    
+                <fieldset id="C">
+                    <input type="text" name="BLEname" label="BLE name:" value="" placeholder="Bluetooth name (your device name)" size="32" >
+                    <input type="text" name="BLEpassword" label="BLE password:" value="" placeholder="password" >
+                    <select name="BLEconfig" label="BLE configration:" Value="2">
+                        <option value="0" >Disabled</option>
+                        <option value="1" >Sensors only</option>
+                        <option value="2" >All</option>
+                    </select>
+                </fieldset>
+                        
+                    
+            </div>
+        <div id="sensor" class="w3-panel Page"  style="display:none"></div>
+        <div id="time" class="w3-panel Page"  style="display:none">
+            <div class="w3-container w3-blue">Time <button  type="button"  onclick="openTab('ntp')">Settings</button><button  type="button"  onclick="openTab('alarms1')">Alarms 1-16</button><button  type="button"  onclick="openTab('alarms2')">Alarms 17-32</button></div>
+            
+                <fieldset id="ntp">
+                    <input type="text" name="NTPserverValue" label="NTP server:" value="" placeholder="must be a valid time server such as north-america.pool.ntp.org" size="128" ><input type="time" name="TZ" label="GMT offset" Value="00:00" ><input type="time" name="DST" label="DST offset" Value="00:00" >
+            </fieldset><fieldset id="alarms1">
+                <table id="tt"><tbody>
+                    <tr><td>ID</td><td>Start</td><td>Stop</td><td><abbr title="Day of week">DOW<abbr></abbr></abbr></td></tr>
+                    <tr><td>1</td><td><input type="time" name="st_0" value="00:00" class="w3-input w3-border"></td><td><input type="time" name="et_0" value="00:00" class="w3-input w3-border"></td><td><select name="d_0" value="2" class="w3-input w3-border"><option value="0">Disabled</option><option value="1">Sun</option><option value="2">Mon</option><option value="3">Tue</option><option value="4">Wed</option><option value="5">Thu</option><option value="6">Fri</option><option value="7">Sat</option><option value="8">Daily</option><option value="9">Once</option></select></td></tr>
+                    <tr><td>2</td><td><input type="time" name="st_1" value="00:00" class="w3-input w3-border"></td><td><input type="time" name="et_1" value="00:00" class="w3-input w3-border"></td><td><select name="d_1" value="0" class="w3-input w3-border"><option value="0">Disabled</option><option value="1">Sun</option><option value="2">Mon</option><option value="3">Tue</option><option value="4">Wed</option><option value="5">Thu</option><option value="6">Fri</option><option value="7">Sat</option><option value="8">Daily</option><option value="9">Once</option></select></td></tr>
+                    <tr><td>3</td><td><input type="time" name="st_2" value="00:00" class="w3-input w3-border"></td><td><input type="time" name="et_2" value="00:00" class="w3-input w3-border"></td><td><select name="d_2" value="0" class="w3-input w3-border"><option value="0">Disabled</option><option value="1">Sun</option><option value="2">Mon</option><option value="3">Tue</option><option value="4">Wed</option><option value="5">Thu</option><option value="6">Fri</option><option value="7">Sat</option><option value="8">Daily</option><option value="9">Once</option></select></td></tr>
+                    <tr><td>4</td><td><input type="time" name="st_3" value="00:00" class="w3-input w3-border"></td><td><input type="time" name="et_3" value="00:00" class="w3-input w3-border"></td><td><select name="d_3" value="0" class="w3-input w3-border"><option value="0">Disabled</option><option value="1">Sun</option><option value="2">Mon</option><option value="3">Tue</option><option value="4">Wed</option><option value="5">Thu</option><option value="6">Fri</option><option value="7">Sat</option><option value="8">Daily</option><option value="9">Once</option></select></td></tr>
+                    <tr><td>5</td><td><input type="time" name="st_4" value="00:00" class="w3-input w3-border"></td><td><input type="time" name="et_4" value="00:00" class="w3-input w3-border"></td><td><select name="d_4" value="0" class="w3-input w3-border"><option value="0">Disabled</option><option value="1">Sun</option><option value="2">Mon</option><option value="3">Tue</option><option value="4">Wed</option><option value="5">Thu</option><option value="6">Fri</option><option value="7">Sat</option><option value="8">Daily</option><option value="9">Once</option></select></td></tr>
+                    <tr><td>6</td><td><input type="time" name="st_5" value="00:00" class="w3-input w3-border"></td><td><input type="time" name="et_5" value="00:00" class="w3-input w3-border"></td><td><select name="d_5" value="0" class="w3-input w3-border"><option value="0">Disabled</option><option value="1">Sun</option><option value="2">Mon</option><option value="3">Tue</option><option value="4">Wed</option><option value="5">Thu</option><option value="6">Fri</option><option value="7">Sat</option><option value="8">Daily</option><option value="9">Once</option></select></td></tr>
+                    <tr><td>7</td><td><input type="time" name="st_6" value="00:00" class="w3-input w3-border"></td><td><input type="time" name="et_6" value="00:00" class="w3-input w3-border"></td><td><select name="d_6" value="0" class="w3-input w3-border"><option value="0">Disabled</option><option value="1">Sun</option><option value="2">Mon</option><option value="3">Tue</option><option value="4">Wed</option><option value="5">Thu</option><option value="6">Fri</option><option value="7">Sat</option><option value="8">Daily</option><option value="9">Once</option></select></td></tr>
+                    <tr><td>8</td><td><input type="time" name="st_7" value="00:00" class="w3-input w3-border"></td><td><input type="time" name="et_7" value="00:00" class="w3-input w3-border"></td><td><select name="d_7" value="0" class="w3-input w3-border"><option value="0">Disabled</option><option value="1">Sun</option><option value="2">Mon</option><option value="3">Tue</option><option value="4">Wed</option><option value="5">Thu</option><option value="6">Fri</option><option value="7">Sat</option><option value="8">Daily</option><option value="9">Once</option></select></td></tr>
+                    <tr><td>9</td><td><input type="time" name="st_8" value="00:00" class="w3-input w3-border"></td><td><input type="time" name="et_8" value="00:00" class="w3-input w3-border"></td><td><select name="d_8" value="0" class="w3-input w3-border"><option value="0">Disabled</option><option value="1">Sun</option><option value="2">Mon</option><option value="3">Tue</option><option value="4">Wed</option><option value="5">Thu</option><option value="6">Fri</option><option value="7">Sat</option><option value="8">Daily</option><option value="9">Once</option></select></td></tr>
+                    <tr><td>10</td><td><input type="time" name="st_9" value="00:00" class="w3-input w3-border"></td><td><input type="time" name="et_9" value="00:00" class="w3-input w3-border"></td><td><select name="d_9" value="0" class="w3-input w3-border"><option value="0">Disabled</option><option value="1">Sun</option><option value="2">Mon</option><option value="3">Tue</option><option value="4">Wed</option><option value="5">Thu</option><option value="6">Fri</option><option value="7">Sat</option><option value="8">Daily</option><option value="9">Once</option></select></td></tr>
+                    <tr><td>11</td><td><input type="time" name="st_10" value="00:00" class="w3-input w3-border"></td><td><input type="time" name="et_10" value="00:00" class="w3-input w3-border"></td><td><select name="d_10" value="0" class="w3-input w3-border"><option value="0">Disabled</option><option value="1">Sun</option><option value="2">Mon</option><option value="3">Tue</option><option value="4">Wed</option><option value="5">Thu</option><option value="6">Fri</option><option value="7">Sat</option><option value="8">Daily</option><option value="9">Once</option></select></td></tr>
+                    <tr><td>12</td><td><input type="time" name="st_11" value="00:00" class="w3-input w3-border"></td><td><input type="time" name="et_11" value="00:00" class="w3-input w3-border"></td><td><select name="d_11" value="0" class="w3-input w3-border"><option value="0">Disabled</option><option value="1">Sun</option><option value="2">Mon</option><option value="3">Tue</option><option value="4">Wed</option><option value="5">Thu</option><option value="6">Fri</option><option value="7">Sat</option><option value="8">Daily</option><option value="9">Once</option></select></td></tr>
+                    <tr><td>13</td><td><input type="time" name="st_12" value="00:00" class="w3-input w3-border"></td><td><input type="time" name="et_12" value="00:00" class="w3-input w3-border"></td><td><select name="d_12" value="0" class="w3-input w3-border"><option value="0">Disabled</option><option value="1">Sun</option><option value="2">Mon</option><option value="3">Tue</option><option value="4">Wed</option><option value="5">Thu</option><option value="6">Fri</option><option value="7">Sat</option><option value="8">Daily</option><option value="9">Once</option></select></td></tr>
+                    <tr><td>14</td><td><input type="time" name="st_13" value="00:00" class="w3-input w3-border"></td><td><input type="time" name="et_13" value="00:00" class="w3-input w3-border"></td><td><select name="d_13" value="0" class="w3-input w3-border"><option value="0">Disabled</option><option value="1">Sun</option><option value="2">Mon</option><option value="3">Tue</option><option value="4">Wed</option><option value="5">Thu</option><option value="6">Fri</option><option value="7">Sat</option><option value="8">Daily</option><option value="9">Once</option></select></td></tr>
+                    <tr><td>15</td><td><input type="time" name="st_14" value="00:00" class="w3-input w3-border"></td><td><input type="time" name="et_14" value="00:00" class="w3-input w3-border"></td><td><select name="d_14" value="0" class="w3-input w3-border"><option value="0">Disabled</option><option value="1">Sun</option><option value="2">Mon</option><option value="3">Tue</option><option value="4">Wed</option><option value="5">Thu</option><option value="6">Fri</option><option value="7">Sat</option><option value="8">Daily</option><option value="9">Once</option></select></td></tr>
+                    <tr><td>16</td><td><input type="time" name="st_15" value="00:00" class="w3-input w3-border"></td><td><input type="time" name="et_15" value="00:00" class="w3-input w3-border"></td><td><select name="d_15" value="0" class="w3-input w3-border"><option value="0">Disabled</option><option value="1">Sun</option><option value="2">Mon</option><option value="3">Tue</option><option value="4">Wed</option><option value="5">Thu</option><option value="6">Fri</option><option value="7">Sat</option><option value="8">Daily</option><option value="9">Once</option></select></td></tr>
+                  </tbody></table>  
+            </fieldset>
+            <fieldset id="alarms2">
+                <table id="tt"><tbody>
+                    <tr><td>ID</td><td>Start</td><td>Stop</td><td><abbr title="Day of week">DOW<abbr></abbr></abbr></td></tr>
+                    <tr><td>16</td><td><input type="time" name="st_16" value="00:00" class="w3-input w3-border"></td><td><input type="time" name="et_16" value="00:00" class="w3-input w3-border"></td><td><select name="d_16" value="0" class="w3-input w3-border"><option value="0">Disabled</option><option value="1">Sun</option><option value="2">Mon</option><option value="3">Tue</option><option value="4">Wed</option><option value="5">Thu</option><option value="6">Fri</option><option value="7">Sat</option><option value="8">Daily</option><option value="9">Once</option></select></td></tr>
+                    <tr><td>17</td><td><input type="time" name="st_17" value="00:00" class="w3-input w3-border"></td><td><input type="time" name="et_17" value="00:00" class="w3-input w3-border"></td><td><select name="d_17" value="0" class="w3-input w3-border"><option value="0">Disabled</option><option value="1">Sun</option><option value="2">Mon</option><option value="3">Tue</option><option value="4">Wed</option><option value="5">Thu</option><option value="6">Fri</option><option value="7">Sat</option><option value="8">Daily</option><option value="9">Once</option></select></td></tr>
+                    <tr><td>18</td><td><input type="time" name="st_18" value="00:00" class="w3-input w3-border"></td><td><input type="time" name="et_18" value="00:00" class="w3-input w3-border"></td><td><select name="d_18" value="0" class="w3-input w3-border"><option value="0">Disabled</option><option value="1">Sun</option><option value="2">Mon</option><option value="3">Tue</option><option value="4">Wed</option><option value="5">Thu</option><option value="6">Fri</option><option value="7">Sat</option><option value="8">Daily</option><option value="9">Once</option></select></td></tr>
+                    <tr><td>19</td><td><input type="time" name="st_19" value="00:00" class="w3-input w3-border"></td><td><input type="time" name="et_19" value="00:00" class="w3-input w3-border"></td><td><select name="d_19" value="0" class="w3-input w3-border"><option value="0">Disabled</option><option value="1">Sun</option><option value="2">Mon</option><option value="3">Tue</option><option value="4">Wed</option><option value="5">Thu</option><option value="6">Fri</option><option value="7">Sat</option><option value="8">Daily</option><option value="9">Once</option></select></td></tr>
+                    <tr><td>20</td><td><input type="time" name="st_20" value="00:00" class="w3-input w3-border"></td><td><input type="time" name="et_20" value="00:00" class="w3-input w3-border"></td><td><select name="d_20" value="0" class="w3-input w3-border"><option value="0">Disabled</option><option value="1">Sun</option><option value="2">Mon</option><option value="3">Tue</option><option value="4">Wed</option><option value="5">Thu</option><option value="6">Fri</option><option value="7">Sat</option><option value="8">Daily</option><option value="9">Once</option></select></td></tr>
+                    <tr><td>21</td><td><input type="time" name="st_21" value="00:00" class="w3-input w3-border"></td><td><input type="time" name="et_21" value="00:00" class="w3-input w3-border"></td><td><select name="d_21" value="0" class="w3-input w3-border"><option value="0">Disabled</option><option value="1">Sun</option><option value="2">Mon</option><option value="3">Tue</option><option value="4">Wed</option><option value="5">Thu</option><option value="6">Fri</option><option value="7">Sat</option><option value="8">Daily</option><option value="9">Once</option></select></td></tr>
+                    <tr><td>22</td><td><input type="time" name="st_22" value="00:00" class="w3-input w3-border"></td><td><input type="time" name="et_22" value="00:00" class="w3-input w3-border"></td><td><select name="d_22" value="0" class="w3-input w3-border"><option value="0">Disabled</option><option value="1">Sun</option><option value="2">Mon</option><option value="3">Tue</option><option value="4">Wed</option><option value="5">Thu</option><option value="6">Fri</option><option value="7">Sat</option><option value="8">Daily</option><option value="9">Once</option></select></td></tr>
+                    <tr><td>23</td><td><input type="time" name="st_23" value="00:00" class="w3-input w3-border"></td><td><input type="time" name="et_23" value="00:00" class="w3-input w3-border"></td><td><select name="d_23" value="0" class="w3-input w3-border"><option value="0">Disabled</option><option value="1">Sun</option><option value="2">Mon</option><option value="3">Tue</option><option value="4">Wed</option><option value="5">Thu</option><option value="6">Fri</option><option value="7">Sat</option><option value="8">Daily</option><option value="9">Once</option></select></td></tr>
+                    <tr><td>24</td><td><input type="time" name="st_24" value="00:00" class="w3-input w3-border"></td><td><input type="time" name="et_24" value="00:00" class="w3-input w3-border"></td><td><select name="d_24" value="0" class="w3-input w3-border"><option value="0">Disabled</option><option value="1">Sun</option><option value="2">Mon</option><option value="3">Tue</option><option value="4">Wed</option><option value="5">Thu</option><option value="6">Fri</option><option value="7">Sat</option><option value="8">Daily</option><option value="9">Once</option></select></td></tr>
+                    <tr><td>25</td><td><input type="time" name="st_25" value="00:00" class="w3-input w3-border"></td><td><input type="time" name="et_25" value="00:00" class="w3-input w3-border"></td><td><select name="d_25" value="0" class="w3-input w3-border"><option value="0">Disabled</option><option value="1">Sun</option><option value="2">Mon</option><option value="3">Tue</option><option value="4">Wed</option><option value="5">Thu</option><option value="6">Fri</option><option value="7">Sat</option><option value="8">Daily</option><option value="9">Once</option></select></td></tr>
+                    <tr><td>26</td><td><input type="time" name="st_26" value="00:00" class="w3-input w3-border"></td><td><input type="time" name="et_26" value="00:00" class="w3-input w3-border"></td><td><select name="d_26" value="0" class="w3-input w3-border"><option value="0">Disabled</option><option value="1">Sun</option><option value="2">Mon</option><option value="3">Tue</option><option value="4">Wed</option><option value="5">Thu</option><option value="6">Fri</option><option value="7">Sat</option><option value="8">Daily</option><option value="9">Once</option></select></td></tr>
+                    <tr><td>27</td><td><input type="time" name="st_27" value="00:00" class="w3-input w3-border"></td><td><input type="time" name="et_27" value="00:00" class="w3-input w3-border"></td><td><select name="d_27" value="0" class="w3-input w3-border"><option value="0">Disabled</option><option value="1">Sun</option><option value="2">Mon</option><option value="3">Tue</option><option value="4">Wed</option><option value="5">Thu</option><option value="6">Fri</option><option value="7">Sat</option><option value="8">Daily</option><option value="9">Once</option></select></td></tr>
+                    <tr><td>28</td><td><input type="time" name="st_28" value="00:00" class="w3-input w3-border"></td><td><input type="time" name="et_28" value="00:00" class="w3-input w3-border"></td><td><select name="d_28" value="0" class="w3-input w3-border"><option value="0">Disabled</option><option value="1">Sun</option><option value="2">Mon</option><option value="3">Tue</option><option value="4">Wed</option><option value="5">Thu</option><option value="6">Fri</option><option value="7">Sat</option><option value="8">Daily</option><option value="9">Once</option></select></td></tr>
+                    <tr><td>29</td><td><input type="time" name="st_29" value="00:00" class="w3-input w3-border"></td><td><input type="time" name="et_29" value="00:00" class="w3-input w3-border"></td><td><select name="d_29" value="0" class="w3-input w3-border"><option value="0">Disabled</option><option value="1">Sun</option><option value="2">Mon</option><option value="3">Tue</option><option value="4">Wed</option><option value="5">Thu</option><option value="6">Fri</option><option value="7">Sat</option><option value="8">Daily</option><option value="9">Once</option></select></td></tr>
+                    <tr><td>30</td><td><input type="time" name="st_30" value="00:00" class="w3-input w3-border"></td><td><input type="time" name="et_30" value="00:00" class="w3-input w3-border"></td><td><select name="d_30" value="0" class="w3-input w3-border"><option value="0">Disabled</option><option value="1">Sun</option><option value="2">Mon</option><option value="3">Tue</option><option value="4">Wed</option><option value="5">Thu</option><option value="6">Fri</option><option value="7">Sat</option><option value="8">Daily</option><option value="9">Once</option></select></td></tr>
+                    <tr><td>31</td><td><input type="time" name="st_31" value="00:00" class="w3-input w3-border"></td><td><input type="time" name="et_31" value="00:00" class="w3-input w3-border"></td><td><select name="d_31" value="0" class="w3-input w3-border"><option value="0">Disabled</option><option value="1">Sun</option><option value="2">Mon</option><option value="3">Tue</option><option value="4">Wed</option><option value="5">Thu</option><option value="6">Fri</option><option value="7">Sat</option><option value="8">Daily</option><option value="9">Once</option></select></td></tr>
+                </tbody></table>
+            </fieldset>
+         
+        
+    
+        </div>
+        <div id="ACL" class="w3-panel Page"  style="display:none"><div class="w3-container w3-blue">Access control</div>
+      
+            <input type="text" name="userName" label="&#128100" value="admin" placeholder="User Name" size="32" >
+            <input type="password" name="userPass" label="&#128272" value="admin" placeholder="password" >
+            <input type="password" name="userPass_verify" value="admin" placeholder="verify password" >
+           
+        </div>
+        <div id="MQTT" class="w3-panel Page"  style="display:none">
+            <input type="text" name="MQTTserver" label="🌐"  placeholder="Server" size="32" >
+            <input type="number" name="MQTTport" label="🎯"  placeholder="Port" >
+            <input type="text" name="MQTTuser" label="👤" placeholder="User Name" size="32" >
+            <input type="text" name="MQTTpass" label="🔑" placeholder="Password" size="32" >
+
+            
+        </div>
+        <div id="sysInfo" class="w3-panel Page"  style="display:none">
+            <div class="w3-container w3-blue">sysInfo</div>
+            <table class="w3-table w3-striped w3-border">
+                <tr><th>Parameter</th><th>Value</th></tr> 
+                <tr><td>ESP32 Revision</td><td id="Revision"></td></tr>
+                <tr><td>SDK version</td><td id="SDK"></td></tr> 
+                <tr><td>CPU frequency</td><td id="CPUspeed"></td></tr>
+                <tr><td>Flash IDE speed</td><td id="FlashSpeed"></td></tr> 
+                <tr><td>Flash IDE size</td><td id="FlashSize"></td></tr> 
+                <tr><td>Flash Mode</td><td id="Mode"></td></tr> 
+                <tr><td>Connected to</td><td id="SSID"></td></tr>
+                <tr><td>IP address<BR>Gateway</td><td id="IP"><br><a href="http://" target="_blank"></a></td></tr> 
+                <tr><td>AP name</td><td id="AP"></td></tr>
+                <tr><td>AP login</td><td id="APpass"></td></tr> 
+                <tr><td>AP IP address</td><td id="APIP"></td></tr> 
+                <tr><td>Time server</td><td id="NTP"></td></tr> 
+                <tr><td>Compilation date</td><td id="comp_date"></td></tr>
+                </table></div>  
+        
+        <div id="update" class="w3-panel Page"  style="display:none">
+            <div class="w3-container w3-blue">Bios Updates</div>
+      
+            <select name="OTA" label="OTA configuration:" Value="2">
+                <option value="0" >Disabled</option>
+                <option value="1" >5 minutes</option>
+                <option value="2" >Always on</option>
+            </select>
+            <input type="password" name="OTApass" label="OTA Password:" value="" placeholder="password" >
+            <input type="password" name="OTApass_verify" value="" placeholder="verify password" >
+          
+        </div>
+    
+        <div id="help" class="w3-panel Page"  style="display:none">   
+            <div class="w3-container w3-blue">
+            Help
+          </div>
+    This is the default help information, it should be replaced for your project with your own help information<br>
+    
+    <div>To use sysConfig is straighforward, you need to include sysConfig8266.h or sysConfig32.h for your ESP8266 or ESP32 projects respectively<br>
+    in setup, add sysConfig.init(); and in loop add.sysConfig.run(); <br><br>
+    To brand the device add your own logo.png file and favicon.ico, these images are expected and file names should be lower case<br>
+    You must also edit index.html to change the title shown in the browser bar and add your own page links<br>
+    about.html should also be replaced with your own file<br><br>
+    To keep the interface consistent and predictable, your menu link needs to include target="frame" as part of the html link, this ensures your page is displayed within the frame, follow the pattern used in the index.html file<br><br>
+    <a href="https://www.w3schools.com/charsets/ref_utf_symbols.asp" target="_blank">https://www.w3schools.com/charsets/ref_utf_symbols.asp</a> provides excellent reference to unicode characters<br>
+    sysConfig uses unicode character encoding to provide icons for its menu structure, this is paricularly well suited to ESP and other embedded devices as it reduces the data storage and number of files required to achieve an attractive UI<br>
+    <br>
+    Memory constraints are particularly tight on the ESP8266 and creating files of more than 4k in code will result in frequent crashes, examine how the timers page is built and how it is rendered using javascript, also to avoid file size issues, use static html files wherever possible, use dynamic pages only for forms and rendering variable data<br>
+    tsysConfig contains a number of form processing elements to support form generation and data processing, these are type checked and where range values are provided, also range checked<br>
+    Use is straightforward and it makes form creation very easy 
+    </div><br>
+    <div>
+      <details>
+        <summary>Example of form elements use from the acl.html page of sysConfig</summary>
+        <p>void tsysConfig::ACL(){<br>
+          // provide the basic page structure<br>
+       HTML=F("&lt!DOCTYPE html&gt&lthtml&gt&lthead&gt&ltmeta charset=\"UTF-8\"&gt&lttitle&gtESP Timers Page&lt/title&gt&ltmeta name=\"viewport\" content=\"width=device-width, initial-scale=1\"&gt");<br>
+       HTML+=F("&ltlink rel=\"stylesheet\" type=\"text/css\" href=\"w3.css\"&gt&ltscript src=\"sc.js\"&gt&lt/script&gt&lt/head&gt&ltbody onload=\"rewrite()\"&gt&ltdiv class=\"w3-container w3-blue\"&gt");<br>
+       HTML+=F("Access control&lt/div&gt");<br>
+       webobj.name="ACL"; // name the form<br>
+       form(webobj);// create the form object<br>
+       webobj.name="userName"; .. name the first field<br>
+       webobj.label="&#128100"; // provide a label, in this case we use a Unicode icon character<br>
+       webobj.placeholder="User Name"; // placeholders are displayed in empty edit fields<br>
+       edit(webobj,_data.userName,32); // create the edit field and attach it to the variable, in this case a char array so we must also provide the size<br>
+       webobj.name="userPass";<br>
+       webobj.label="&#128272";<br>
+       webobj.placeholder="Password";<br>
+       password(webobj,_data.userPass,32);<br>
+       // complete the form, this includes the save button for us<br>
+       form();<br>
+       // if the data is being posted, it is processed as we recreate the page elements so the form reflects the current data<br>
+       // storing the data to the variable is automatically done by the form utilities<br>
+         if ( server.method() == HTTP_POST ){ your_routine();<br>}// additional processing of the variables
+       HTML+=F("&lt/body&gt&lt/html&gt");<br> 
+       server.send(200, "text/html", HTML);<br>HTML="";<br> webobj.name="";<br>s webobj.css="";<br>webobj.label="";<br> webobj.placeholder="";<br></p>
+      </details><BR>
+        To put a logo onto the 404 page is a bit more of a challenge, I used <a href="https://html.imageonline.co/" target="_blank">https://html.imageonline.co/</a> to convert my image file to inline text, I then pasted this into my 404 page, this ensures the 404 page loads even if files are missing<br>
+    
+    </div>
+    </div>
+    </div></form>
+    </div>
+    <div class="w3-center">Copyright ©2020 Peter Dunne <a href=https://theresearchlaboratory.com>The Research Laboratory</a></div>
+      </body>
+    </html>
+    
