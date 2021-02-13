@@ -6,7 +6,194 @@
     <meta http-equi="Connection" content="close">
     
     <script>
-    
+ // list from multiple sources 
+// https://gist.github.com/mutin-sa/eea1c396b1e610a2da1e5550d94b0453
+// https://www.pool.ntp.org/zone/asia
+// https://www.pool.ntp.org/zone/europe
+// https://www.pool.ntp.org/zone/north-america
+// https://www.pool.ntp.org/zone/oceania
+
+
+var NTPservers=["ae.pool.ntp.org","af.pool.ntp.org","am.pool.ntp.org","az.pool.ntp.org","bd.pool.ntp.org",
+"bh.pool.ntp.org","bn.pool.ntp.org","bt.pool.ntp.org","cc.pool.ntp.org","cn.pool.ntp.org","cx.pool.ntp.org",
+"cy.pool.ntp.org","ge.pool.ntp.org","hk.pool.ntp.org","id.pool.ntp.org","il.pool.ntp.org","in.pool.ntp.org",
+"io.pool.ntp.org","iq.pool.ntp.org","ir.pool.ntp.org","jo.pool.ntp.org","jp.pool.ntp.org","kg.pool.ntp.org",
+"kh.pool.ntp.org","kp.pool.ntp.org","kr.pool.ntp.org","kw.pool.ntp.org","kz.pool.ntp.org","la.pool.ntp.org",
+"lb.pool.ntp.org","lk.pool.ntp.org","mm.pool.ntp.org","mn.pool.ntp.org","mo.pool.ntp.org","mv.pool.ntp.org",
+"my.pool.ntp.org","np.pool.ntp.org","om.pool.ntp.org","ph.pool.ntp.org","pk.pool.ntp.org","ps.pool.ntp.org",
+"qa.pool.ntp.org","sa.pool.ntp.org","sg.pool.ntp.org","sy.pool.ntp.org","th.pool.ntp.org","tj.pool.ntp.org",
+"tl.pool.ntp.org","tm.pool.ntp.org","tw.pool.ntp.org","uz.pool.ntp.org","vn.pool.ntp.org","ye.pool.ntp.org",
+"ad.pool.ntp.org","al.pool.ntp.org","at.pool.ntp.org","ax.pool.ntp.org","ba.pool.ntp.org",
+"be.pool.ntp.org","bg.pool.ntp.org","by.pool.ntp.org","ch.pool.ntp.org","cz.pool.ntp.org",
+"de.pool.ntp.org","dk.pool.ntp.org","ee.pool.ntp.org","es.pool.ntp.org","fi.pool.ntp.org",
+"fo.pool.ntp.org","fr.pool.ntp.org","gg.pool.ntp.org","gi.pool.ntp.org","gr.pool.ntp.org",
+"hr.pool.ntp.org","hu.pool.ntp.org","ie.pool.ntp.org","im.pool.ntp.org","is.pool.ntp.org",
+"it.pool.ntp.org","je.pool.ntp.org","li.pool.ntp.org","lt.pool.ntp.org","lu.pool.ntp.org",
+"lv.pool.ntp.org","mc.pool.ntp.org","md.pool.ntp.org","me.pool.ntp.org","mk.pool.ntp.org",
+"mt.pool.ntp.org","nl.pool.ntp.org","no.pool.ntp.org","pl.pool.ntp.org","pt.pool.ntp.org",
+"ro.pool.ntp.org","rs.pool.ntp.org","ru.pool.ntp.org","se.pool.ntp.org","si.pool.ntp.org",
+"sj.pool.ntp.org","sk.pool.ntp.org","sm.pool.ntp.org","tr.pool.ntp.org","ua.pool.ntp.org",
+"uk.pool.ntp.org","va.pool.ntp.org","yu.pool.ntp.org","ag.pool.ntp.org","ai.pool.ntp.org",
+"aw.pool.ntp.org","bb.pool.ntp.org","bl.pool.ntp.org","bm.pool.ntp.org","bq.pool.ntp.org",
+"bs.pool.ntp.org","bz.pool.ntp.org","ca.pool.ntp.org","cr.pool.ntp.org","cu.pool.ntp.org",
+"cw.pool.ntp.org","dm.pool.ntp.org","do.pool.ntp.org","gd.pool.ntp.org","gl.pool.ntp.org",
+"gp.pool.ntp.org","gt.pool.ntp.org","hn.pool.ntp.org","ht.pool.ntp.org","jm.pool.ntp.org",
+"kn.pool.ntp.org","ky.pool.ntp.org","lc.pool.ntp.org","mf.pool.ntp.org","mq.pool.ntp.org",
+"ms.pool.ntp.org","mx.pool.ntp.org","ni.pool.ntp.org","pa.pool.ntp.org","pm.pool.ntp.org",
+"pr.pool.ntp.org","sv.pool.ntp.org","sx.pool.ntp.org","tc.pool.ntp.org","tt.pool.ntp.org",
+"us.pool.ntp.org","vc.pool.ntp.org","vg.pool.ntp.org","vi.pool.ntp.org","as.pool.ntp.org",
+"au.pool.ntp.org","ck.pool.ntp.org","fj.pool.ntp.org","fm.pool.ntp.org","gu.pool.ntp.org",
+"ki.pool.ntp.org","mh.pool.ntp.org","mp.pool.ntp.org","nc.pool.ntp.org","nf.pool.ntp.org",
+"nr.pool.ntp.org","nu.pool.ntp.org","nz.pool.ntp.org","pf.pool.ntp.org","pg.pool.ntp.org",
+"pn.pool.ntp.org","pw.pool.ntp.org","sb.pool.ntp.org","tk.pool.ntp.org","to.pool.ntp.org",
+"tv.pool.ntp.org","um.pool.ntp.org","vu.pool.ntp.org","wf.pool.ntp.org","ws.pool.ntp.org",
+"time.google.com","time1.google.com","time2.google.com","time3.google.com","time4.google.com","time.cloudflare.com",
+"time.facebook.com","time1.facebook.com","time2.facebook.com","time3.facebook.com","time4.facebook.com",
+"time5.facebook.com","time.windows.com","time.apple.com","time.euro.apple.com","clepsydra.dec.com",
+"clepsydra.labs.hp.com","clepsydra.hpl.hp.com","time-a-g.nist.gov","time-b-g.nist.gov",
+"time-c-g.nist.gov","time-d-g.nist.gov","time-a-wwv.nist.gov","time-b-wwv.nist.gov","time-c-wwv.nist.gov",
+"time-d-wwv.nist.gov","time-a-b.nist.gov","time-b-b.nist.gov","time-c-b.nist.gov","time-d-b.nist.gov",
+"time.nist.gov","utcnist.colorado.edu","utcnist2.colorado.edu","ntp1.vniiftri.ru","ntp2.vniiftri.ru",
+"ntp3.vniiftri.ru","ntp4.vniiftri.ru","ntp1.niiftri.irkutsk.ru","ntp2.niiftri.irkutsk.ru","vniiftri.khv.ru",
+"vniiftri2.khv.ru","ntp21.vniiftri.ru","ntp.mobatime.ru","ntp1.stratum1.ru","ntp2.stratum1.ru",
+"ntp3.stratum1.ru","ntp4.stratum1.ru","ntp5.stratum1.ru","ntp2.stratum2.ru","ntp3.stratum2.ru",
+"ntp4.stratum2.ru","ntp5.stratum2.ru","stratum1.net","ntp.ru","ts1.aco.net","ts2.aco.net","ntp1.net.berkeley.edu",
+"ntp2.net.berkeley.edu","ntp.gsu.edu","tick.usask.ca","tock.usask.ca","ntp.nsu.ru","ntp.rsu.edu.ru","ntp.nict.jp",
+"clock.nyc.he.net","clock.sjc.he.net","ntp.fiord.ru","gbg1.ntp.se","gbg2.ntp.se",
+"mmo1.ntp.se","mmo2.ntp.se","sth1.ntp.se","sth2.ntp.se","svl1.ntp.se","svl2.ntp.se",
+"ntp.se","ntp.yycix.ca","ntp.ix.ru","time-a.as43289.net","time-b.as43289.net","time-c.as43289.net",
+"ntp.ripe.net","clock.isc.org","ntp.time.nl","ntp0.as34288.net","ntp1.as34288.net",
+"ntp1.jst.mfeed.ad.jp","ntp2.jst.mfeed.ad.jp","ntp3.jst.mfeed.ad.jp","pool.ntp.org","0.pool.ntp.org",
+"1.pool.ntp.org","2.pool.ntp.org","3.pool.ntp.org","europe.pool.ntp.org","0.europe.pool.ntp.org",
+"1.europe.pool.ntp.org","2.europe.pool.ntp.org","3.europe.pool.ntp.org","asia.pool.ntp.org","0.asia.pool.ntp.org",
+"1.asia.pool.ntp.org","2.asia.pool.ntp.org","3.asia.pool.ntp.org","ru.pool.ntp.org","0.ru.pool.ntp.org",
+"1.ru.pool.ntp.org","2.ru.pool.ntp.org","3.ru.pool.ntp.org","0.gentoo.pool.ntp.org","1.gentoo.pool.ntp.org",
+"2.gentoo.pool.ntp.org","3.gentoo.pool.ntp.org","0.arch.pool.ntp.org","1.arch.pool.ntp.org",
+"2.arch.pool.ntp.org","3.arch.pool.ntp.org","0.fedora.pool.ntp.org","1.fedora.pool.ntp.org","2.fedora.pool.ntp.org",
+"3.fedora.pool.ntp.org","0.opensuse.pool.ntp.org","1.opensuse.pool.ntp.org","2.opensuse.pool.ntp.org",
+"3.opensuse.pool.ntp.org","0.centos.pool.ntp.org","1.centos.pool.ntp.org","2.centos.pool.ntp.org",
+"3.centos.pool.ntp.org","0.debian.pool.ntp.org","1.debian.pool.ntp.org","2.debian.pool.ntp.org",
+"3.debian.pool.ntp.org","0.askozia.pool.ntp.org","1.askozia.pool.ntp.org","2.askozia.pool.ntp.org",
+"3.askozia.pool.ntp.org","0.freebsd.pool.ntp.org","1.freebsd.pool.ntp.org","2.freebsd.pool.ntp.org",
+"3.freebsd.pool.ntp.org","0.netbsd.pool.ntp.org","1.netbsd.pool.ntp.org","2.netbsd.pool.ntp.org",
+"3.netbsd.pool.ntp.org","0.openbsd.pool.ntp.org","1.openbsd.pool.ntp.org","2.openbsd.pool.ntp.org",
+"3.openbsd.pool.ntp.org","0.dragonfly.pool.ntp.org","1.dragonfly.pool.ntp.org","2.dragonfly.pool.ntp.org",
+"3.dragonfly.pool.ntp.org","0.pfsense.pool.ntp.org","1.pfsense.pool.ntp.org","2.pfsense.pool.ntp.org",
+"3.pfsense.pool.ntp.org","0.opnsense.pool.ntp.org","1.opnsense.pool.ntp.org","2.opnsense.pool.ntp.org",
+"3.opnsense.pool.ntp.org","0.amazon.pool.ntp.org","1.amazon.pool.ntp.org","2.amazon.pool.ntp.org",
+"3.amazon.pool.ntp.org","tick.usno.navy.mil","tock.usno.navy.mil","ntp2.usno.navy.mil","utcnist2.colorado.edu",
+"timekeeper.isi.edu","rackety.udel.edu","mizbeaver.udel.edu","otc1.psu.edu","gnomon.cc.columbia.edu",
+"navobs1.gatech.edu","navobs1.wustl.edu","now.okstate.edu","ntp.colby.edu","ntp-s1.cise.ufl.edu",
+"ntpstm.netbone-digital.com","nist1.symmetricom.com","t2.timegps.net","gps.layer42.net",
+"ntp-ca.stygium.net","sesku.planeacion.net","ntp0.nl.uu.net","ntp1.nl.uu.net","navobs1.oar.net",
+"ntp-galway.hea.net","ntp1.ona.org","time.fu-berlin.de","atom.uhr.de","ntps1-0.cs.tu-berlin.de",
+"ntps1-1.cs.tu-berlin.de","ntps1-0.uni-erlangen.de","ntps1-1.uni-erlangen.de","ntp1.fau.de",
+"ntp2.fau.de","ntp.dianacht.de","zeit.fu-berlin.de","ptbtime1.ptb.de","ptbtime2.ptb.de",
+"rustime01.rus.uni-stuttgart.de","rustime02.rus.uni-stuttgart.de","chime1.surfnet.nl",
+"ntp.vsl.nl","asynchronos.iiss.at","ntp.nic.cz","time.ufe.cz","ntp.fizyka.umk.pl","tempus1.gum.gov.pl",
+"tempus2.gum.gov.pl","ntp1.usv.ro","ntp3.usv.ro","timehost.lysator.liu.se","time1.stupi.se",
+"time.nrc.ca","clock.uregina.ca","cronos.cenam.mx","ntp.lcf.mx","hora.roa.es","minuto.roa.es",
+"ntp1.inrim.it","ntp2.inrim.it","ntp1.oma.be","ntp2.oma.be","ntp.atomki.mta.hu","ntp.i2t.ehu.eus",
+"ntp.neel.ch","ntp.neu.edu.cn","ntp.nict.jp","ntps1.pads.ufrj.br","ntp.shoa.cl","time.esa.int",
+"time1.esa.int"];    
+
+function autocomplete(inp, arr) {
+  /*the autocomplete function takes two arguments,
+  the text field element and an array of possible autocompleted values:*/
+  var currentFocus;
+  /*execute a function when someone writes in the text field:*/
+  inp.addEventListener("input", function(e) {
+      var a, b, i, val = this.value;
+      /*close any already open lists of autocompleted values*/
+      closeAllLists();
+      if (!val) { return false;}
+      currentFocus = -1;
+      /*create a DIV element that will contain the items (values):*/
+      a = document.createElement("DIV");
+      a.setAttribute("id", this.id + "autocomplete-list");
+      a.setAttribute("class", "autocomplete-items");
+      /*append the DIV element as a child of the autocomplete container:*/
+      this.parentNode.appendChild(a);
+      /*for each item in the array...*/
+      for (i = 0; i < arr.length; i++) {
+        /*check if the item starts with the same letters as the text field value:*/
+        if (arr[i].substr(0, val.length).toUpperCase() == val.toUpperCase()) {
+          /*create a DIV element for each matching element:*/
+          b = document.createElement("DIV");
+          /*make the matching letters bold:*/
+          b.innerHTML = "<strong>" + arr[i].substr(0, val.length) + "</strong>";
+          b.innerHTML += arr[i].substr(val.length);
+          /*insert a input field that will hold the current array item's value:*/
+          b.innerHTML += "<input type='hidden' value='" + arr[i] + "'>";
+          /*execute a function when someone clicks on the item value (DIV element):*/
+          b.addEventListener("click", function(e) {
+              /*insert the value for the autocomplete text field:*/
+              inp.value = this.getElementsByTagName("input")[0].value;
+              /*close the list of autocompleted values,
+              (or any other open lists of autocompleted values:*/
+              closeAllLists();
+          });
+          a.appendChild(b);
+        }
+      }
+  });
+  /*execute a function presses a key on the keyboard:*/
+  inp.addEventListener("keydown", function(e) {
+      var x = document.getElementById(this.id + "autocomplete-list");
+      if (x) x = x.getElementsByTagName("div");
+      if (e.keyCode == 40) {
+        /*If the arrow DOWN key is pressed,
+        increase the currentFocus variable:*/
+        currentFocus++;
+        /*and and make the current item more visible:*/
+        addActive(x);
+      } else if (e.keyCode == 38) { //up
+        /*If the arrow UP key is pressed,
+        decrease the currentFocus variable:*/
+        currentFocus--;
+        /*and and make the current item more visible:*/
+        addActive(x);
+      } else if (e.keyCode == 13) {
+        /*If the ENTER key is pressed, prevent the form from being submitted,*/
+        e.preventDefault();
+        if (currentFocus > -1) {
+          /*and simulate a click on the "active" item:*/
+          if (x) x[currentFocus].click();
+        }
+      }
+  });
+  function addActive(x) {
+    /*a function to classify an item as "active":*/
+    if (!x) return false;
+    /*start by removing the "active" class on all items:*/
+    removeActive(x);
+    if (currentFocus >= x.length) currentFocus = 0;
+    if (currentFocus < 0) currentFocus = (x.length - 1);
+    /*add class "autocomplete-active":*/
+    x[currentFocus].classList.add("autocomplete-active");
+  }
+  function removeActive(x) {
+    /*a function to remove the "active" class from all autocomplete items:*/
+    for (var i = 0; i < x.length; i++) {
+      x[i].classList.remove("autocomplete-active");
+    }
+  }
+  function closeAllLists(elmnt) {
+    /*close all autocomplete lists in the document,
+    except the one passed as an argument:*/
+    var x = document.getElementsByClassName("autocomplete-items");
+    for (var i = 0; i < x.length; i++) {
+      if (elmnt != x[i] && elmnt != inp) {
+        x[i].parentNode.removeChild(x[i]);
+      }
+    }
+  }
+  /*execute a function when someone clicks in the document:*/
+  document.addEventListener("click", function (e) {
+      closeAllLists(e.target);
+  });
+}
+   
     // load the data from AJAX, then put it into the various form fields
     // this expects data in all fields and so modifications of the forms must be reflected in the processing code
 function int2ip (ipInt) {
@@ -32,22 +219,81 @@ if (rminutes>9) {minutes=rminutes;}else{minutes="0"+rminutes;}
 return hours + ":" + minutes;
 }
 
-var JSONobj = JSONobj = JSON.parse(
-    '{"WiFi":["jazenga","","","",""],"data":["TRL_Device","12345678",11,1,"TRL_Device","1111",1,"admin","admin",2,"admin"],"MQTT":["server.mqtt.com",129,"MQTTuser","MQTTpass"],"time":["north-america.pool.ntp.org",87802,87544],"sysInfo":[1,"v3.2.3-14-gd3e562907",240,80000000,4194304,"DIO","jazenga",-469653312,16885952,17082560,"Jul 10 2020","08:10:14"],"alarms":[61,183,305,427,549,671,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,122,244,366,488,610,732,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,2,3,4,5,6,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]}'    
-);
+function loadDocESP8266() {
+  var xhttp = new XMLHttpRequest();
+  xhttp.onreadystatechange = function() {
+    if (this.readyState == 4 && this.status == 200) {
+// parse the data
+var JSONobj = JSON.parse(this.responseText);
+alert(xhttp.responseText); // used for debug
+// place the data
+    // WiFi SSID
+       document.getElementsByName('SSID_0')[0].value= JSONobj.WiFi[0];
+    // Access point
+        document.getElementsByName('APname')[0].value= JSONobj.WiFi[1];  
+        document.getElementsByName('APpass')[0].value= JSONobj.WiFi[2];  
+        document.getElementsByName('APchannel')[0].value= JSONobj.WiFi[3];  
+        document.getElementsByName('APconfig')[0].selectedIndex= JSONobj.WiFi[4];  
+     // security   
+        document.getElementsByName('userName')[0].value= JSONobj.acl[0];  
+        document.getElementsByName('userPass')[0].value= JSONobj.acl[1];  
+        document.getElementsByName('userPass_verify')[0].value= JSONobj.acl[1];  
+     // OTA, over the air software update   
+        document.getElementsByName('OTA')[0].selectedIndex= JSONobj.acl[2]; 
+        document.getElementsByName('OTApass')[0].value= JSONobj.acl[3];  
+        document.getElementsByName('OTApass_verify')[0].value= JSONobj.acl[3];  
+     // MQTT
+        document.getElementsByName("MQTTserver")[0].value=JSONobj.MQTT[0];
+        document.getElementsByName("MQTTport")[0].value=JSONobj.MQTT[1];
+        document.getElementsByName("MQTTuser")[0].value=JSONobj.MQTT[2];
+        document.getElementsByName("MQTTpass")[0].value=JSONobj.MQTT[3];
+     // Time server
+        document.getElementsByName('NTPserver')[0].value= JSONobj.time[0];  
+        document.getElementsByName('TZ')[0].value= timeConvert(JSONobj.time[1]);  
+        document.getElementsByName('DST')[0].value= timeConvert(JSONobj.time[2]);  
+     // Alarms
+     for (i = 0; i < 16; i++)
+        {
+            document.getElementsByName('st_'+i)[0].value= timeConvert(JSONobj.alarms[i]); 
+            document.getElementsByName('et_'+i)[0].value= timeConvert(JSONobj.alarms[16+i]); 
+            document.getElementsByName('d_'+i)[0].selectedIndex= JSONobj.alarms[32+i]; 
+        }
 
-function pull(){
-var JSONpull = new XMLHttpRequest();
+     // sysInfo
+    document.getElementById("ChipID").innerHTML=JSONobj.sysInfo[0];
+    document.getElementById("SDK").innerHTML=JSONobj.sysInfo[1];
+    document.getElementById("CPUspeed").innerHTML=JSONobj.sysInfo[2]+" MHz";
+    document.getElementById("FlashSpeed").innerHTML=numberWithCommas(JSONobj.sysInfo[3])+" Hz";
+    document.getElementById("FlashSize").innerHTML=numberWithCommas(JSONobj.sysInfo[4])+" Bytes";
+    document.getElementById("Mode").innerHTML=JSONobj.sysInfo[5];
+    document.getElementById("SSID").innerHTML=JSONobj.sysInfo[6];
+    document.getElementById("IP").innerHTML=int2ip(JSONobj.sysInfo[7])+"<br>"+int2ip(JSONobj.sysInfo[8]);
+    document.getElementById("AP").innerHTML=JSONobj.WiFi[1]; 
+    document.getElementById("APpass").innerHTML=JSONobj.WiFi[2];
+    document.getElementById("APIP").innerHTML=int2ip(JSONobj.sysInfo[9]);
+    document.getElementById("NTP").innerHTML=JSONobj.time[0];  
+    document.getElementById("MAC").innerHTML=JSONobj.sysInfo[12];  
+    document.getElementById("comp_date").innerHTML=JSONobj.sysInfo[10]+" - "+JSONobj.sysInfo[11];
+ 
+    }
+  };
+  xhttp.open("GET", "data.json", true);
+  xhttp.send();
+}
 
-//JSONpull.onreadystatechange = function() {
-//  if (this.readyState == 4 && this.status == 200) 
-  {
-//    JSONObj = JSON.parse(this.responseText);
+function loadDoc() {
+  var xhttp = new XMLHttpRequest();
+  xhttp.onreadystatechange = function() {
+    if (this.readyState == 4 && this.status == 200) {
+// parse the data
+  var JSONobj = JSON.parse(this.responseText);
+ // alert(xhttp.responseText); // used for debug
    // READ THE PACKAGE AND UPDATE THE FIELDS
         for (i = 0; i < 5; i++)
         { 
     // WiFi configuration  
-          document.getElementsByName('SSID_'+i)[0].value= JSONobj.WiFi[i];
+    document.getElementsByName('SSID_'+i)[0].value= JSONobj.WiFi[i];
+ //   document.getElementsByName('magic').value= this.responseText;
         }
     // Access point
         document.getElementsByName('APname')[0].value= JSONobj.data[0];  
@@ -67,16 +313,10 @@ var JSONpull = new XMLHttpRequest();
         document.getElementsByName('OTApass')[0].value= JSONobj.data[10];  
         document.getElementsByName('OTApass_verify')[0].value= JSONobj.data[10];  
      // Time server
-        document.getElementsByName('NTPserverValue')[0].value= JSONobj.time[0];  
+        document.getElementsByName('NTPserver')[0].value= JSONobj.time[0];  
         document.getElementsByName('TZ')[0].value= timeConvert(JSONobj.time[1]);  
         document.getElementsByName('DST')[0].value= timeConvert(JSONobj.time[2]);  
     // Alarms
-
-    // MQTT
-    document.getElementsByName("MQTTserver")[0].value=JSONobj.MQTT[0];
-    document.getElementsByName("MQTTport")[0].value=JSONobj.MQTT[1];
-    document.getElementsByName("MQTTuser")[0].value=JSONobj.MQTT[2];
-    document.getElementsByName("MQTTpass")[0].value=JSONobj.MQTT[3];
 
     // sysInfo
     document.getElementById("Revision").innerHTML=JSONobj.sysInfo[0];
@@ -92,6 +332,11 @@ var JSONpull = new XMLHttpRequest();
     document.getElementById("APIP").innerHTML=int2ip(JSONobj.sysInfo[9]);
     document.getElementById("NTP").innerHTML=JSONobj.time[0];  
     document.getElementById("comp_date").innerHTML=JSONobj.sysInfo[10]+" - "+JSONobj.sysInfo[11];
+    // MQTT
+    document.getElementsByName("MQTTserver")[0].value=JSONobj.MQTT[0];
+    document.getElementsByName("MQTTport")[0].value=JSONobj.MQTT[1];
+    document.getElementsByName("MQTTuser")[0].value=JSONobj.MQTT[2];
+    document.getElementsByName("MQTTpass")[0].value=JSONobj.MQTT[3];
 
     for (i = 0; i < 32; i++)
         {
@@ -100,12 +345,12 @@ var JSONpull = new XMLHttpRequest();
             document.getElementsByName('d_'+i)[0].selectedIndex= JSONobj.alarms[64+i]; 
         }
  
-   // }
+    }
   }
 
+  xhttp.open("GET", "data.json", true);
+  xhttp.send();
 
-JSONpull.open("GET", "data.json", true);
-    // data is posted to the server in the conventional post fashion
 };    
     
     function openTab(id)
@@ -130,7 +375,7 @@ JSONpull.open("GET", "data.json", true);
       }
       document.getElementById(PageName).style.display = "block";  
       w3_close();
-      pull();
+      loadDoc();
     }
     
     function inputrewrite(tag)
@@ -191,7 +436,8 @@ JSONpull.open("GET", "data.json", true);
         list = document.getElementsByTagName("input");
         for (i = 0; i < list.length; i++)
         {
-          list[i].addEventListener("change", formChanged, false);
+            list[i].addEventListener("change", formChanged, false);
+            list[i].addEventListener("input", formChanged, false);
     
         }
         list = document.getElementsByTagName("select");
@@ -203,6 +449,8 @@ JSONpull.open("GET", "data.json", true);
     
         inputrewrite("input");
         optionrewrite();
+        autocomplete(document.getElementById("NTPserver"), NTPservers);
+    loadDoc();
     }
     function openWiFi(){
         openPage('WiFi');
@@ -404,7 +652,7 @@ JSONpull.open("GET", "data.json", true);
             </div>
             
                 <fieldset id="A">
-                    <input type="text" name="SSID_0" label="WiFi 1:" value="jazenga" placeholder="WiFi SSID" size="32" >
+                    <input type="text" name="SSID_0" label="WiFi 1:" value="" placeholder="WiFi SSID" size="32" >
                     <input type="password" name="SSID_pass_0" label="Password:" value="FVLICEYE" placeholder="password" >
                     <input type="password" name="SSID_pass_0_verify" value="FVLICEYE" placeholder="verify password" >
                     <input type="text" name="SSID_1" label="WiFi 2:" value="" placeholder="WiFi SSID" size="32" >
@@ -451,11 +699,11 @@ JSONpull.open("GET", "data.json", true);
             <div class="w3-container w3-blue">Time <button  type="button"  onclick="openTab('ntp')">Settings</button><button  type="button"  onclick="openTab('alarms1')">Alarms 1-16</button><button  type="button"  onclick="openTab('alarms2')">Alarms 17-32</button></div>
             
                 <fieldset id="ntp">
-                    <input type="text" name="NTPserverValue" label="NTP server:" value="" placeholder="must be a valid time server such as north-america.pool.ntp.org" size="128" ><input type="time" name="TZ" label="GMT offset" Value="00:00" ><input type="time" name="DST" label="DST offset" Value="00:00" >
+                   <input type="time" name="TZ" label="GMT offset" ><input type="time" name="DST" label="DST offset"  > <input type="text" name="NTPserver" id="NTPserver" label="NTP server:" value="" placeholder="must be a valid time server such as north-america.pool.ntp.org" size="128" >
             </fieldset><fieldset id="alarms1">
                 <table id="tt"><tbody>
                     <tr><td>ID</td><td>Start</td><td>Stop</td><td><abbr title="Day of week">DOW<abbr></abbr></abbr></td></tr>
-                    <tr><td>1</td><td><input type="time" name="st_0" value="00:00" class="w3-input w3-border"></td><td><input type="time" name="et_0" value="00:00" class="w3-input w3-border"></td><td><select name="d_0" value="2" class="w3-input w3-border"><option value="0">Disabled</option><option value="1">Sun</option><option value="2">Mon</option><option value="3">Tue</option><option value="4">Wed</option><option value="5">Thu</option><option value="6">Fri</option><option value="7">Sat</option><option value="8">Daily</option><option value="9">Once</option></select></td></tr>
+                    <tr><td>1</td><td><input type="time" name="st_0" value="00:00" class="w3-input w3-border"></td><td><input type="time" name="et_0" value="00:00" class="w3-input w3-border"></td><td><select name="d_0" value="0" class="w3-input w3-border"><option value="0">Disabled</option><option value="1">Sun</option><option value="2">Mon</option><option value="3">Tue</option><option value="4">Wed</option><option value="5">Thu</option><option value="6">Fri</option><option value="7">Sat</option><option value="8">Daily</option><option value="9">Once</option></select></td></tr>
                     <tr><td>2</td><td><input type="time" name="st_1" value="00:00" class="w3-input w3-border"></td><td><input type="time" name="et_1" value="00:00" class="w3-input w3-border"></td><td><select name="d_1" value="0" class="w3-input w3-border"><option value="0">Disabled</option><option value="1">Sun</option><option value="2">Mon</option><option value="3">Tue</option><option value="4">Wed</option><option value="5">Thu</option><option value="6">Fri</option><option value="7">Sat</option><option value="8">Daily</option><option value="9">Once</option></select></td></tr>
                     <tr><td>3</td><td><input type="time" name="st_2" value="00:00" class="w3-input w3-border"></td><td><input type="time" name="et_2" value="00:00" class="w3-input w3-border"></td><td><select name="d_2" value="0" class="w3-input w3-border"><option value="0">Disabled</option><option value="1">Sun</option><option value="2">Mon</option><option value="3">Tue</option><option value="4">Wed</option><option value="5">Thu</option><option value="6">Fri</option><option value="7">Sat</option><option value="8">Daily</option><option value="9">Once</option></select></td></tr>
                     <tr><td>4</td><td><input type="time" name="st_3" value="00:00" class="w3-input w3-border"></td><td><input type="time" name="et_3" value="00:00" class="w3-input w3-border"></td><td><select name="d_3" value="0" class="w3-input w3-border"><option value="0">Disabled</option><option value="1">Sun</option><option value="2">Mon</option><option value="3">Tue</option><option value="4">Wed</option><option value="5">Thu</option><option value="6">Fri</option><option value="7">Sat</option><option value="8">Daily</option><option value="9">Once</option></select></td></tr>
@@ -597,6 +845,7 @@ JSONpull.open("GET", "data.json", true);
     </div></form>
     </div>
     <div class="w3-center">Copyright ©2020 Peter Dunne <a href=https://theresearchlaboratory.com>The Research Laboratory</a></div>
+    <div id="magic"></div>
       </body>
     </html>
     

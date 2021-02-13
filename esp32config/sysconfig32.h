@@ -300,25 +300,6 @@ class tSysConfig{
  void getIcon();
  void indexPage(void);
  
-/* 
- void getAbout();
- void Config();
- void Sensors();
- void Timers();
- void Time();
- void OTA();
- void ACL(); 
- void Register();
- void MQTT();
- void Sysinfo();
- void getHelp();
- // binary
- void getCSS();
- void getLogo();
- void getJS();
- void getSCjs();
- bool webAuth(); // used by restricted Configuration pages
- */
  void handleNotFound();
  // to support a Configuration application, we have the JSON data exchanges, there are no individual pages in the JSON processing
  void getJSON();// format bytes
@@ -357,6 +338,8 @@ bool tSysConfig::readConfig(){
 size_t size = ConfigFile.size();
  if (size != sizeof(_data)) {
  Serial.println("Config file size is invalid");
+ Serial.print(size);
+ Serial.println(":file size");
  ConfigFile.close();
  return false;
  }
@@ -427,8 +410,8 @@ void tSysConfig::initConfig() {
  if (_data.burncount == 0) {
  Serial.print("Init failure: ");
  // initialize the flash memory
- strlcpy(_data.AccessPoints[0].WiFiname,"jazenga",32);
- strlcpy(_data.AccessPoints[0].WiFipassword,"FVLICEYE",32);
+ strlcpy(_data.AccessPoints[0].WiFiname,"DEFAULT",32);
+ strlcpy(_data.AccessPoints[0].WiFipassword,"DEFAULT",32);
  strlcpy(_data.APname,"TRL_Device",32);
  strlcpy(_data.APpassword,"12345678",32);
 // Set a static ip address for the Access point mode
@@ -1168,7 +1151,7 @@ void tSysConfig::indexPage(void) {
    error=copyval(_data.BLEpassword ,"BLEpassword",32);
    error=copyval(_data.BLEConfig ,"BLEconfig",0,4);
   //NTP 
-   error=copyval(_data.NTPserver ,"NTPServer",128);
+   error=copyval(_data.NTPserver ,"NTPserver",128);
    error=copyval(_data.TZ ,"TZ");
    _data.TZ=_data.TZ-86400;
    error=copyval(_data.DST ,"DST");
@@ -1200,6 +1183,7 @@ void tSysConfig::indexPage(void) {
   sprintf(buffer,"d_%d",i);
    error=copyval(_data.timers[i].dow,buffer);  
    }
+   writeConfig();
   }  
   File dataFile = SPIFFS.open("/index.html", "r"); 
  if (dataFile.size()<=0) {Serial.println("bad file size");
@@ -1222,7 +1206,7 @@ void tSysConfig::getIcon(){
 void tSysConfig::getJSON(){
  // needs a buffer
    Serial.println("getJson");
-char* json ="'{\"WiFi\":[\"%s\",\"%s\",\"%s\",\"%s\",\"%s\"],\"data\":[\"%s\",\"%s\",%d,%d,\"%s\",\"%s\",%d,\"%s\",\"%s\",%d,\"%s\"],\"MQTT\":[\"%s\",%d,\"%s\",\"%s\"],\"time\":[\"%s\",%d,%d],\"sysInfo\":[%d,\"%s\",%d,%d,%d,\"%s\",\"%s\",%d,%d,%d,\"%s\",\"%s\"],\"alarms\":[%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d]}'";
+char* json ="{\"WiFi\":[\"%s\",\"%s\",\"%s\",\"%s\",\"%s\"],\"data\":[\"%s\",\"%s\",%d,%d,\"%s\",\"%s\",%d,\"%s\",\"%s\",%d,\"%s\"],\"MQTT\":[\"%s\",%d,\"%s\",\"%s\"],\"time\":[\"%s\",%d,%d],\"sysInfo\":[%d,\"%s\",%d,%d,%d,\"%s\",\"%s\",%d,%d,%d,\"%s\",\"%s\"],\"alarms\":[%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d]}";
 
 char jsonbuf[sizeof(_data)+sizeof(json)+4];
 
@@ -1297,10 +1281,10 @@ char jsonbuf[sizeof(_data)+sizeof(json)+4];
    _data.timers[24].dow, _data.timers[25].dow, _data.timers[26].dow, _data.timers[27].dow,
    _data.timers[28].dow, _data.timers[29].dow, _data.timers[30].dow, _data.timers[31].dow
 );
-   Serial.println(WiFi.SSID().c_str()); // wifi config info
+ /*  Serial.println(WiFi.SSID().c_str()); // wifi config info
    Serial.println(WiFi.localIP());
    Serial.println(WiFi.gatewayIP());
-   Serial.println(WiFi.softAPIP());
+   Serial.println(WiFi.softAPIP());*/
    
  server.send(200, "text/x-json", jsonbuf);
  server.client().stop();
@@ -1334,4 +1318,3 @@ void tSysConfig::handleNotFound(){
 }
 
  tSysConfig sysConfig;
-
