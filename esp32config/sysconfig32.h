@@ -151,8 +151,6 @@ unsigned int localPort = 2390;  // local port to listen for UDP packets
 enum s_class {s_none, s_byte, s_int32_t, s_float, s_text};// used by the select functions
 enum eSensorClass {s_undefined, s_NTC, s_BMP, s_BME, s_ADC, s_Freq, s_PWM, s_Weight};
 
-
-
 typedef std::function<void(time_t trigger)> TTimerFunction;
 String HTML;
 char buffer[256];
