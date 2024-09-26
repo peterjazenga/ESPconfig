@@ -31,5 +31,6 @@ Some amateur code is very good, unfortunately I would not class the available we
 <p>This work is FOSS under the Mozilla license.</p>
 <p><a href="https://github.com/peterjazenga/ESPconfig" target="_blank" rel="noopener">https://github.com/peterjazenga/ESPconfig</a></p>
 <p>&nbsp;</p>
-
+<p>Required: https://github.com/me-no-dev/arduino-esp32fs-plugin & <br> https://github.com/esp8266/arduino-esp8266fs-plugin</p>
+<p>The files contained in the relevant upload folder must be uploaded for ESPconfig to function properly</p>
 Built against time library from https://github.com/PaulStoffregen/Time or http://playground.arduino.cc/Code/Time version 1.5.0
