@@ -45,7 +45,15 @@
 #define NAPT 1000
 #define NAPT_PORT 10
 // utility routines
-int LED_BUILTIN = 2;
+#ifndef LED_BUILTIN
+    #ifdef ESP32
+        #define LED_BUILTIN 2        // ESP32 built-in LED (GPIO 2)
+    #elif defined(ESP8266)
+        #define LED_BUILTIN 2        // ESP8266 built-in LED (GPIO 2)
+    #else
+        #define LED_BUILTIN 13       // Default to pin 13 if no board matches
+    #endif
+#endif
 // define a structure for on/off timers to control the device activity
 typedef struct {
  time_t startTime;
